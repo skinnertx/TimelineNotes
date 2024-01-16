@@ -1,25 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
-
-func testingFunc() {
-	directoryPath := "D:\\Notes"
-
-	fileList, err := getFilesInDirectory(directoryPath)
-	for _, file := range fileList {
-		path, fname := splitPathAndFilename(file)
-		fmt.Println(path, " _ ", fname)
-	}
-	if err != nil {
-		fmt.Println("Error uploading file:", err)
-		return
-	}
-}
 
 func splitPathAndFilename(filePath string) (string, string) {
 	index := strings.LastIndex(filePath, "\\")

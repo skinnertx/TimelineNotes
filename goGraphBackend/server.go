@@ -9,16 +9,6 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
-func bulkUploadNotes() {
-
-	// TODO
-	// 	- get list of files in directory
-	// 	- for each file, break into path and filename
-	//  - upload to s3
-	//  - upload to neo4j with metadata (links) defined
-
-}
-
 func uploadFileToS3() {
 
 	// Specify your AWS region
@@ -105,11 +95,16 @@ func main() {
 	fmt.Println("neo4j Connection established.")
 
 	// set up s3 connection
-	svc := estavlishS3Connection()
+	//svc := estavlishS3Connection()
 
 	// testing neo4j
-	listNodesinDB(driver, ctx)
-	listObjectsinS3(svc)
+	clearDB(driver, ctx)
+	createRootDirectory(driver, ctx)
+	bulkUploadNotes(driver, ctx, "D:\\Notes")
+
+	//createDirNode(driver, ctx)
+	// listNodesinDB(driver, ctx)
+	//listObjectsinS3(svc)
 
 	// enter waiting loop, make endpoints available
 
