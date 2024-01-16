@@ -100,7 +100,7 @@ func main() {
 	// testing neo4j
 	clearDB(driver, ctx)
 	createRootDirectory(driver, ctx)
-	bulkUploadNotes(driver, ctx, "D:\\Notes")
+	bulkUploadNotes(driver, ctx, "D:\\Notes Pruned")
 
 	//createDirNode(driver, ctx)
 	// listNodesinDB(driver, ctx)
