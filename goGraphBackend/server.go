@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
+
+	"github.com/joho/godotenv"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
 func bulkUploadNotes() {
@@ -75,21 +80,41 @@ func uploadFileToS3() {
 
 func main() {
 
-	// set up neo4j connection
-	ctx, driver := establishNeo4jConnection()
+	// set up neo4j driver
+	ctx := context.Background()
+	err := godotenv.Load("Neo4jCreds.txt")
+	if err != nil {
+		panic(err)
+	}
+	dbUri := os.Getenv("NEO4J_URI")
+	dbUser := os.Getenv("NEO4J_USERNAME")
+	dbPassword := os.Getenv("NEO4J_PASSWORD")
+
+	driver, err := neo4j.NewDriverWithContext(
+		dbUri,
+		neo4j.BasicAuth(dbUser, dbPassword, ""))
+	if err != nil {
+		panic(err)
+	}
+	defer driver.Close(ctx)
+
+	err = driver.VerifyConnectivity(ctx)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("neo4j Connection established.")
 
 	// set up s3 connection
 	svc := estavlishS3Connection()
 
 	// testing neo4j
-	listNodesinDB(ctx, driver)
+	listNodesinDB(driver, ctx)
 	listObjectsinS3(svc)
 
 	// enter waiting loop, make endpoints available
 
 	// on action, call appropriate function
 
-	testingFunc()
 	//uploadFileToS3()
 	//testS3()
 	// testQuery(ctx, driver)
