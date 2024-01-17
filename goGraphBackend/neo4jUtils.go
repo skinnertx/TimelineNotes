@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
@@ -92,59 +91,16 @@ func getImagesFromMarkdownFile(filePath string) ([]string, error) {
 	DATABASE MODIFICATION FUNCTIONS
 ******************************************************************
 */
-// specific function for uploading hierarchical notes from windows folder
-// NOTE: root should already exist somewhere in the database before this is called
-// need a place for all heirarchical notes to be linked back to in file tree
-func bulkUploadNotes(driver neo4j.DriverWithContext, ctx context.Context, dirPath string) {
 
-	// get list of files in directory
-	fileList, err := getFilesInDirectory(dirPath)
-	if err != nil {
-		fmt.Println("Error walking directory:", err)
-		return
-	}
-
-	for _, file := range fileList {
-
-		// parse markdown file for media
-		media, err := getImagesFromMarkdownFile(file)
-		if err != nil {
-			fmt.Println("Error parsing markdown file for media:", err)
-		}
-
-		// split path and filename for node creation
-		path, fname := splitPathAndFilename(file)
-
-		dirPaths := strings.Split(path, "\\")
-		prev := "root"
-		// loop through directory paths and create nodes if not existing
-		for _, dir := range dirPaths {
-			matchCreateDirNode(driver, ctx, prev, dir)
-			prev = dir
-		}
-
-		// create file node linked to final directory node
-		// also create media nodes and link to file node
-		matchCreateFileNode(driver, ctx, prev, fname, media)
-	}
-
-	// TODO
-	//  - sync upload to s3, and give nodes s3 keys
-
-}
-
-// create media nodes and link to associated file node
-func matchCreateMediaNode(driver neo4j.DriverWithContext, ctx context.Context, name string, media string) {
-
-	fmt.Println("Creating media node for", name)
-
+// create directory node and link to parent directory node
+func matchCreateDirNode(driver neo4j.DriverWithContext, ctx context.Context, parent string, child string) {
 	result, err := neo4j.ExecuteQuery(ctx, driver,
-		"MATCH (f:File {name: $name}) "+
-			"MERGE (f)-[:LINKED]->(i:Media {name: $media}) "+
-			"RETURN i",
+		"MATCH (p:Directory {name: $parent}) "+
+			"MERGE (p)-[:CONTAINS]->(d:Directory {name: $child}) "+
+			"RETURN d",
 		map[string]any{
-			"name":  name,
-			"media": media,
+			"parent": parent,
+			"child":  child,
 		}, neo4j.EagerResultTransformer,
 		neo4j.ExecuteQueryWithDatabase("neo4j"))
 	if err != nil {
@@ -158,17 +114,20 @@ func matchCreateMediaNode(driver neo4j.DriverWithContext, ctx context.Context, n
 
 // create file node and link to associated directory node
 func matchCreateFileNode(driver neo4j.DriverWithContext, ctx context.Context,
-	prev string, name string, media []string) {
+	prev string, name string, media []string, s3Key string) {
+
+	// TODO upload to s3, and use key as neo4j property
 
 	fmt.Println("Creating file node for", name)
 
 	result, err := neo4j.ExecuteQuery(ctx, driver,
 		"MATCH (d:Directory {name: $prev}) "+
-			"MERGE (d)-[:CONTAINS]->(f:File {name: $name}) "+
+			"MERGE (d)-[:CONTAINS]->(f:File {name: $name, s3key: $key}) "+
 			"RETURN f",
 		map[string]any{
 			"prev": prev,
 			"name": name,
+			"key":  s3Key,
 		}, neo4j.EagerResultTransformer,
 		neo4j.ExecuteQueryWithDatabase("neo4j"))
 	if err != nil {
@@ -187,15 +146,20 @@ func matchCreateFileNode(driver neo4j.DriverWithContext, ctx context.Context,
 
 }
 
-// create directory node and link to parent directory node
-func matchCreateDirNode(driver neo4j.DriverWithContext, ctx context.Context, parent string, child string) {
+// create media nodes and link to associated file node
+func matchCreateMediaNode(driver neo4j.DriverWithContext, ctx context.Context, name string, media string) {
+
+	// TODO upload to s3, and use key as neo4j property
+
+	fmt.Println("Creating media node for", name)
+
 	result, err := neo4j.ExecuteQuery(ctx, driver,
-		"MATCH (p:Directory {name: $parent}) "+
-			"MERGE (p)-[:CONTAINS]->(d:Directory {name: $child}) "+
-			"RETURN d",
+		"MATCH (f:File {name: $name}) "+
+			"MERGE (f)-[:LINKED]->(i:Media {name: $media}) "+
+			"RETURN i",
 		map[string]any{
-			"parent": parent,
-			"child":  child,
+			"name":  name,
+			"media": media,
 		}, neo4j.EagerResultTransformer,
 		neo4j.ExecuteQueryWithDatabase("neo4j"))
 	if err != nil {

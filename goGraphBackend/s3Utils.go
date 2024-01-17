@@ -2,13 +2,16 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-func estavlishS3Connection() *s3.S3 {
+var bucketName = "timeline-notes-bucket"
+
+func establishS3Connection() *s3.S3 {
 	// Specify your AWS region
 	awsRegion := "us-east-1"
 
@@ -26,23 +29,31 @@ func estavlishS3Connection() *s3.S3 {
 	fmt.Println("s3 Connection established.")
 
 	return svc
+}
 
-	/*
-		// Specify your bucket name
-		bucketName := "timeline-notes-bucket"
+func uploadObjectToS3(svc *s3.S3, fName string) error {
 
-		// Example: List objects in the bucket
-		resp, err := svc.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucketName)})
-		if err != nil {
-			fmt.Println("Error listing objects:", err)
-			return
-		}
+	// Open the file for use
+	file, err := os.Open(fName)
+	defer file.Close()
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return err
+	}
 
-		// Print object names
-		for _, obj := range resp.Contents {
-			fmt.Println("Object:", *obj.Key)
-		}
-	*/
+	// Upload the file to the S3 bucket
+	_, err = svc.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(fName),
+		Body:   file,
+	})
+	if err != nil {
+		fmt.Println("Error uploading file:", err)
+		return err
+	}
+
+	fmt.Println("File uploaded successfully!")
+	return nil
 }
 
 func listObjectsinS3(svc *s3.S3) {
