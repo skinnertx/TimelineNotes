@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -17,7 +16,7 @@ import (
 
 ******************************************************************
 */
-func createRootDirectory(driver neo4j.DriverWithContext, ctx context.Context) {
+func createRootDirectory() {
 	result, err := neo4j.ExecuteQuery(ctx, driver,
 		"MERGE (d:Directory {name: $name}) RETURN d",
 		map[string]any{
@@ -32,7 +31,7 @@ func createRootDirectory(driver neo4j.DriverWithContext, ctx context.Context) {
 		result.Summary.ResultAvailableAfter())
 }
 
-func clearDB(driver neo4j.DriverWithContext, ctx context.Context) {
+func clearDB() {
 
 	_, err := neo4j.ExecuteQuery(ctx, driver,
 		"MATCH (n) DETACH DELETE n",
@@ -102,7 +101,7 @@ func getS3KeyFromName(name string) (string, error) {
 ******************************************************************
 */
 
-func listFilesinDB(driver neo4j.DriverWithContext, ctx context.Context) {
+func listFilesinDB() {
 
 	result, err := neo4j.ExecuteQuery(ctx, driver,
 		"MATCH (f:File) RETURN f LIMIT 25;",
@@ -128,7 +127,7 @@ func listFilesinDB(driver neo4j.DriverWithContext, ctx context.Context) {
 		result.Summary.ResultAvailableAfter())
 }
 
-func listNodesinDB(driver neo4j.DriverWithContext, ctx context.Context) {
+func listNodesinDB() {
 
 	result, err := neo4j.ExecuteQuery(ctx, driver,
 		"MATCH (n) RETURN n LIMIT 25;",
@@ -181,7 +180,7 @@ func getImagesFromMarkdownFile(filePath string) ([]string, error) {
 */
 
 // create directory node and link to parent directory node
-func matchCreateDirNode(driver neo4j.DriverWithContext, ctx context.Context, parent string, child string) {
+func matchCreateDirNode(parent string, child string) {
 	result, err := neo4j.ExecuteQuery(ctx, driver,
 		"MATCH (p:Directory {name: $parent}) "+
 			"MERGE (p)-[:CONTAINS]->(d:Directory {name: $child}) "+
@@ -201,10 +200,7 @@ func matchCreateDirNode(driver neo4j.DriverWithContext, ctx context.Context, par
 }
 
 // create file node and link to associated directory node
-func matchCreateFileNode(driver neo4j.DriverWithContext, ctx context.Context,
-	prev string, name string, media []string, s3Key string) {
-
-	// TODO upload to s3, and use key as neo4j property
+func matchCreateFileNode(prev string, name string, media []string, s3Key string) {
 
 	fmt.Println("Creating file node for", name)
 
@@ -225,7 +221,7 @@ func matchCreateFileNode(driver neo4j.DriverWithContext, ctx context.Context,
 	// media nodes should be added and linked here!
 	if len(media) > 0 {
 		for _, fm := range media {
-			matchCreateMediaNode(driver, ctx, name, fm)
+			matchCreateMediaNode(name, fm)
 		}
 	}
 
@@ -235,7 +231,7 @@ func matchCreateFileNode(driver neo4j.DriverWithContext, ctx context.Context,
 }
 
 // create media nodes and link to associated file node
-func matchCreateMediaNode(driver neo4j.DriverWithContext, ctx context.Context, name string, media string) {
+func matchCreateMediaNode(name string, media string) {
 
 	// TODO upload to s3, and use key as neo4j property
 

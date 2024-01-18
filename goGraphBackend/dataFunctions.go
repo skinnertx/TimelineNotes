@@ -1,14 +1,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gorilla/mux"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
 /*
@@ -20,6 +17,8 @@ import (
 */
 
 func serveFile(w http.ResponseWriter, r *http.Request) {
+
+	// TODO return error in HTTP?
 
 	vars := mux.Vars(r)
 	s3Key := vars["fileName"]
@@ -45,7 +44,7 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 // specific function for uploading hierarchical notes from windows folder
 // NOTE: root should already exist somewhere in the database before this is called
 // need a place for all heirarchical notes to be linked back to in file tree
-func bulkUploadNotes(svc *s3.S3, driver neo4j.DriverWithContext, ctx context.Context, dirPath string) {
+func bulkUploadNotes(dirPath string, chopDrive bool) {
 
 	// get list of files in directory
 	// NOTE: files in fileList are full paths
@@ -63,7 +62,7 @@ func bulkUploadNotes(svc *s3.S3, driver neo4j.DriverWithContext, ctx context.Con
 			file := fileList[i]
 
 			// upload file to s3
-			err := uploadObjectToS3(svc, file)
+			err := uploadObjectToS3(file, chopDrive)
 			// if err
 			if err != nil {
 				// remove from list
@@ -82,20 +81,31 @@ func bulkUploadNotes(svc *s3.S3, driver neo4j.DriverWithContext, ctx context.Con
 			fmt.Println("Error parsing markdown file for media:", err)
 		}
 
+		// TODO: make this less hacky and more maintainable
+		// there are multiple places where the drive letter is removed from the file path
+		// and its annoying to keep track of
+		if chopDrive {
+			file = removeDriveLetter(file)
+		}
+
 		// split path and filename for node creation
 		path, fname := splitPathAndFilename(file)
+
+		// TODO: potential edge case of uploading a drive
+		// thus with chop drive path is just ""? need to test
+		// but this function likely wont make it to prod so not a big deal
 
 		dirPaths := strings.Split(path, "\\")
 		prev := "root"
 		// loop through directory paths and create nodes if not existing
 		for _, dir := range dirPaths {
-			matchCreateDirNode(driver, ctx, prev, dir)
+			matchCreateDirNode(prev, dir)
 			prev = dir
 		}
 
 		// create file node linked to final directory node
 		// also create media nodes and link to file node
-		matchCreateFileNode(driver, ctx, prev, fname, media, file)
+		matchCreateFileNode(prev, fname, media, file)
 	}
 
 	// TODO

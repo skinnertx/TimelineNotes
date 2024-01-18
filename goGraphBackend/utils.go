@@ -3,8 +3,14 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+func removeDriveLetter(filePath string) string {
+	re := regexp.MustCompile(`^[A-Za-z]:\\`)
+	return re.ReplaceAllString(filePath, "")
+}
 
 func splitPathAndFilename(filePath string) (string, string) {
 	index := strings.LastIndex(filePath, "\\")

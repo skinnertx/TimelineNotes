@@ -56,7 +56,32 @@ func getFileContents(key string) ([]byte, error) {
 	return bs, nil
 }
 
-func uploadObjectToS3(svc *s3.S3, fName string) error {
+func clearBucket() error {
+
+	// List objects in the bucket
+	resp, err := svc.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucketName)})
+	if err != nil {
+		fmt.Println("Error listing objects:", err)
+		return err
+	}
+
+	// Delete each object in the bucket
+	for _, obj := range resp.Contents {
+		_, err := svc.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    obj.Key,
+		})
+		if err != nil {
+			fmt.Println("Error deleting object:", err)
+			return err
+		}
+	}
+
+	fmt.Println("Bucket cleared successfully!")
+	return nil
+}
+
+func uploadObjectToS3(fName string, chopDrive bool) error {
 
 	// Open the file for use
 	file, err := os.Open(fName)
@@ -64,6 +89,11 @@ func uploadObjectToS3(svc *s3.S3, fName string) error {
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return err
+	}
+
+	// hacky fix to remove drive letter from file path for windows machines
+	if chopDrive {
+		fName = removeDriveLetter(fName)
 	}
 
 	// Upload the file to the S3 bucket
@@ -81,7 +111,7 @@ func uploadObjectToS3(svc *s3.S3, fName string) error {
 	return nil
 }
 
-func listObjectsinS3(svc *s3.S3) {
+func listObjectsinS3() {
 	// Specify your bucket name
 	bucketName := "timeline-notes-bucket"
 

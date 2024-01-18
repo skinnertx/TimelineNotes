@@ -13,7 +13,7 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
-var allowS3Upload = false
+var allowS3Upload = false // used in bulk upload to skip s3 upload
 var driver neo4j.DriverWithContext
 var ctx context.Context
 var svc *s3.S3
