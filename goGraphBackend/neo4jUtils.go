@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j/dbtype"
 )
 
 /*
@@ -47,11 +48,76 @@ func clearDB(driver neo4j.DriverWithContext, ctx context.Context) {
 
 /*
 ******************************************************************
+	FETCHING FUNCTIONS
+******************************************************************
+*/
+
+type FileNode struct {
+	name  string
+	s3key string
+}
+
+func getS3KeyFromName(driver neo4j.DriverWithContext, ctx context.Context, name string) (string, error) {
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	result, err := session.Run(ctx,
+		"MATCH (f:File {name: $name}) RETURN f.s3key",
+		map[string]interface{}{
+			"name": name,
+		},
+	)
+
+	if err != nil {
+		fmt.Println("Error executing Neo4j query:", err)
+		return "", err
+	}
+
+	if result.Next(ctx) {
+		s3key, exists := result.Record().Get("f.s3key")
+		if !exists {
+			return "", fmt.Errorf("S3 key not found for file: %s", name)
+		}
+		return s3key.(string), nil
+	}
+
+	return "", fmt.Errorf("File not found: %s", name)
+}
+
+/*
+******************************************************************
 
 	Utility Functions
 
 ******************************************************************
 */
+
+func listFilesinDB(driver neo4j.DriverWithContext, ctx context.Context) {
+
+	result, err := neo4j.ExecuteQuery(ctx, driver,
+		"MATCH (f:File) RETURN f LIMIT 25;",
+		nil, neo4j.EagerResultTransformer,
+		neo4j.ExecuteQueryWithDatabase("neo4j"))
+	if err != nil {
+		panic(err)
+	}
+
+	// Print the results
+	for _, record := range result.Records {
+		// Iterate over fields in each record
+		file, _ := record.Get("f")
+		fields := file.(dbtype.Node).Props
+		name := fields["name"].(string)
+		s3key := fields["s3key"].(string)
+
+		fmt.Printf("File: %s\n", name)
+		fmt.Printf("S3 Key: %s\n\n", s3key)
+	}
+	fmt.Printf("The query `%v` returned %v records in %+v.\n",
+		result.Summary.Query().Text(), len(result.Records),
+		result.Summary.ResultAvailableAfter())
+}
+
 func listNodesinDB(driver neo4j.DriverWithContext, ctx context.Context) {
 
 	result, err := neo4j.ExecuteQuery(ctx, driver,
@@ -62,6 +128,18 @@ func listNodesinDB(driver neo4j.DriverWithContext, ctx context.Context) {
 		panic(err)
 	}
 
+	// Print the results
+	for _, record := range result.Records {
+		// Iterate over fields in each record
+		for _, field := range record.Keys {
+			value, exists := record.Get(field)
+			if exists {
+				fmt.Printf("%s: %v\n", field, value)
+			} else {
+				fmt.Printf("%s: <nil>\n", field)
+			}
+		}
+	}
 	fmt.Printf("The query `%v` returned %v records in %+v.\n",
 		result.Summary.Query().Text(), len(result.Records),
 		result.Summary.ResultAvailableAfter())
