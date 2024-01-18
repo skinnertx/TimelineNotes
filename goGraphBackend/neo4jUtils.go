@@ -57,9 +57,19 @@ type FileNode struct {
 	s3key string
 }
 
-func getS3KeyFromName(driver neo4j.DriverWithContext, ctx context.Context, name string) (string, error) {
+func getS3KeyFromName(name string) (string, error) {
+	fmt.Printf("Getting s3 key for file: %s\n", name)
+	if ctx == nil {
+		fmt.Println("Context is nil")
+		return "", fmt.Errorf("Context is nil")
+	}
+	if driver == nil {
+		fmt.Println("Driver is nil")
+	}
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
+
+	fmt.Println("Executing Neo4j query...")
 
 	result, err := session.Run(ctx,
 		"MATCH (f:File {name: $name}) RETURN f.s3key",

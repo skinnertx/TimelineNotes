@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/gorilla/mux"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
@@ -16,17 +18,28 @@ import (
 
 ******************************************************************
 */
-func getFile(svc *s3.S3, driver neo4j.DriverWithContext, ctx context.Context, name string) (string, error) {
-	fName, err := getS3KeyFromName(driver, ctx, name)
-	if err != nil {
-		return "", err
-	}
-	err = downloadObjectFromS3(svc, fName)
-	if err != nil {
-		return "", err
-	}
 
-	return "", nil
+func serveFile(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	s3Key := vars["fileName"]
+	s3ObjectKey, err := getS3KeyFromName(s3Key)
+	if err != nil {
+		fmt.Println("Error getting s3 key from name:", err)
+		return
+	}
+	fmt.Println("found s3ObjectKey:", s3ObjectKey)
+
+	// Set appropriate headers
+	w.Header().Set("Content-Type", "text/plain")
+
+	// Write the file content as the response
+	fileContents, err := getFileContents(s3ObjectKey)
+	if err != nil {
+		fmt.Println("Error getting file contents:", err)
+		return
+	}
+	w.Write(fileContents)
 }
 
 // specific function for uploading hierarchical notes from windows folder

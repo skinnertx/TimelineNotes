@@ -32,8 +32,7 @@ func establishS3Connection() *s3.S3 {
 	return svc
 }
 
-func downloadObjectFromS3(svc *s3.S3, key string) error {
-
+func getFileContents(key string) ([]byte, error) {
 	// Create the S3 Object input
 	obj := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
@@ -44,26 +43,17 @@ func downloadObjectFromS3(svc *s3.S3, key string) error {
 	resp, err := svc.GetObject(obj)
 	if err != nil {
 		fmt.Println("Error getting object:", err)
-		return err
+		return nil, err
 	}
 
-	// Create the file
-	file, err := os.Create(key)
+	// Read the response body into a byte slice
+	bs, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close()
-
-	// Write the contents of S3 Object to the file
-	_, err = io.Copy(file, resp.Body)
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
-		return err
+		fmt.Println("Error reading file:", err)
+		return nil, err
 	}
 
-	fmt.Println("File downloaded successfully!")
-	return nil
+	return bs, nil
 }
 
 func uploadObjectToS3(svc *s3.S3, fName string) error {
