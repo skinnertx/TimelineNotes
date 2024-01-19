@@ -30,6 +30,8 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("found s3ObjectKey:", s3ObjectKey)
 
 	// Set appropriate headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET")
 	w.Header().Set("Content-Type", "text/plain")
 
 	// Write the file content as the response
