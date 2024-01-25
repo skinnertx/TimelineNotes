@@ -60,6 +60,7 @@ func main() {
 	// set up endpoints
 	r := mux.NewRouter()
 	r.HandleFunc("/api/getfile/{fileName}", serveFile)
+	r.HandleFunc("/api/hierarchy/{dirName}", serveHierarchy)
 
 	err = http.ListenAndServe(":8080", r)
 	if err != nil {

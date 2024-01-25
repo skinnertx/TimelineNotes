@@ -56,15 +56,40 @@ type FileNode struct {
 	s3key string
 }
 
+func getContainedNodes(dirName string) ([]string, error) {
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	result, err := session.Run(ctx,
+		"MATCH (d:Directory {name: $name})-[:CONTAINS]->(n) RETURN n",
+		map[string]any{
+			"name": dirName,
+		},
+	)
+
+	if err != nil {
+		fmt.Println("Error executing Neo4j query:", err)
+		return nil, err
+	}
+
+	var nodes []string
+	for result.Next(ctx) {
+		node, exists := result.Record().Get("n")
+		if !exists {
+			return nil, fmt.Errorf("Node not found: %s", dirName)
+		}
+		fields := node.(dbtype.Node).Props
+		name := fields["name"].(string)
+		nodes = append(nodes, name)
+	}
+
+	return nodes, nil
+}
+
 func getS3KeyFromName(name string) (string, error) {
 	fmt.Printf("Getting s3 key for file: %s\n", name)
-	if ctx == nil {
-		fmt.Println("Context is nil")
-		return "", fmt.Errorf("Context is nil")
-	}
-	if driver == nil {
-		fmt.Println("Driver is nil")
-	}
+
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 

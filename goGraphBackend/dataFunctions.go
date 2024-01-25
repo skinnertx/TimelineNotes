@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,6 +16,55 @@ import (
 
 ******************************************************************
 */
+type Neo4jNode struct {
+	Name     string       `json:"name"`
+	Children []*Neo4jNode `json:"children,omitempty"`
+}
+
+func getHierarchy(parent *Neo4jNode) error {
+	children, err := getContainedNodes(parent.Name)
+	if err != nil {
+		return err
+	}
+
+	for _, child := range children {
+		parent.Children = append(parent.Children, &Neo4jNode{Name: child})
+		if !strings.Contains(child, ".") {
+			err = getHierarchy(parent.Children[len(parent.Children)-1])
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func serveHierarchy(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	dirName := vars["dirName"]
+	if dirName == "" {
+		dirName = "root"
+	}
+	root := &Neo4jNode{Name: dirName}
+	err := getHierarchy(root)
+	if err != nil {
+		fmt.Println("Error getting hierarchy:", err)
+	}
+	jsonData, err := json.Marshal(root)
+	if err != nil {
+		fmt.Println("Error marshalling json:", err)
+	}
+
+	// Set appropriate headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET")
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the file content as the response
+	w.Write(jsonData)
+}
 
 func serveFile(w http.ResponseWriter, r *http.Request) {
 
@@ -30,6 +80,8 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("found s3ObjectKey:", s3ObjectKey)
 
 	// Set appropriate headers
+
+	// TODO: make this more secure
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET")
 	w.Header().Set("Content-Type", "text/plain")
