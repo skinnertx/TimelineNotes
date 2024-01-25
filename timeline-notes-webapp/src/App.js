@@ -5,6 +5,8 @@ import Root from './routes/root';
 import ErrorPage from './error-page';
 import {Route, Routes} from "react-router-dom";
 import Navbar from './components/Navbar';
+import Hierarchy from './routes/hierarchy';
+import MicromarkFile from './routes/markdownFile';
 
 function App() {
   return (
@@ -19,8 +21,13 @@ function App() {
         />
         <Route 
           path="/markdown/:file" 
-          element={<MarkdownViewer />} 
+          element={<MicromarkFile />} 
           errorElement={<ErrorPage/>}
+        />
+        <Route
+          path="/hierarchy"
+          element={<Hierarchy />}
+          errorElement={<ErrorPage/>} 
         />
       </Routes>
     </div>
