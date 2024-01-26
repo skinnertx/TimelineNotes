@@ -61,29 +61,10 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/getfile/{fileName}", serveFile)
 	r.HandleFunc("/api/hierarchy/{dirName}", serveHierarchy)
+	r.HandleFunc("/api/getImage/{imageName}", serveImage)
 
 	err = http.ListenAndServe(":8080", r)
 	if err != nil {
 		panic(err)
 	}
-
-	// these lines reset the Aura database to a clean slate
-	// TODO: make optional on boot?
-	//clearDB(driver, ctx)
-	//createRootDirectory(driver, ctx)
-
-	// testing neo4j and s3
-	//bulkUploadNotes(svc, driver, ctx, "D:\\Notes Pruned")
-	//fmt.Println("*************************************")
-
-	//fmt.Println("*************************************")
-	//listObjectsinS3(svc)
-
-	// enter waiting loop, make endpoints available
-
-	// on action, call appropriate function
-
-	//uploadFileToS3()
-	//testS3()
-	// testQuery(ctx, driver)
 }

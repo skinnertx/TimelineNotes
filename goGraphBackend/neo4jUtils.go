@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j/dbtype"
@@ -96,7 +97,7 @@ func getS3KeyFromName(name string) (string, error) {
 	fmt.Println("Executing Neo4j query...")
 
 	result, err := session.Run(ctx,
-		"MATCH (f:File {name: $name}) RETURN f.s3key",
+		"MATCH (n) WHERE (n:File OR n:Media) AND n.name = $name RETURN n.s3key",
 		map[string]interface{}{
 			"name": name,
 		},
@@ -108,7 +109,7 @@ func getS3KeyFromName(name string) (string, error) {
 	}
 
 	if result.Next(ctx) {
-		s3key, exists := result.Record().Get("f.s3key")
+		s3key, exists := result.Record().Get("n.s3key")
 		if !exists {
 			return "", fmt.Errorf("S3 key not found for file: %s", name)
 		}
@@ -246,7 +247,15 @@ func matchCreateFileNode(prev string, name string, media []string, s3Key string)
 	// media nodes should be added and linked here!
 	if len(media) > 0 {
 		for _, fm := range media {
-			matchCreateMediaNode(name, fm)
+			path, _ := splitPathAndFilename(s3Key)
+
+			mediaName := fm
+			index := strings.LastIndex(fm, "/")
+			if index != -1 {
+				mediaName = fm[index+1:]
+			}
+			fullPath := path + "\\media\\" + mediaName
+			matchCreateMediaNode(name, mediaName, fullPath)
 		}
 	}
 
@@ -256,19 +265,20 @@ func matchCreateFileNode(prev string, name string, media []string, s3Key string)
 }
 
 // create media nodes and link to associated file node
-func matchCreateMediaNode(name string, media string) {
+func matchCreateMediaNode(parentName string, media string, s3key string) {
 
 	// TODO upload to s3, and use key as neo4j property
 
-	fmt.Println("Creating media node for", name)
+	fmt.Println("Creating media node for", parentName)
 
 	result, err := neo4j.ExecuteQuery(ctx, driver,
 		"MATCH (f:File {name: $name}) "+
-			"MERGE (f)-[:LINKED]->(i:Media {name: $media}) "+
+			"MERGE (f)-[:LINKED]->(i:Media {name: $media, s3key: $s3key}) "+
 			"RETURN i",
 		map[string]any{
-			"name":  name,
+			"name":  parentName,
 			"media": media,
+			"s3key": s3key,
 		}, neo4j.EagerResultTransformer,
 		neo4j.ExecuteQueryWithDatabase("neo4j"))
 	if err != nil {

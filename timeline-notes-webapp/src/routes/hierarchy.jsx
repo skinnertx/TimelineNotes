@@ -17,7 +17,7 @@ export default function Hierarchy() {
 
   
           const hierarchyJson = await response.json();
-          console.log(hierarchyJson);
+
           setHierarchy(hierarchyJson);
         } catch (error) {
           console.error('Error fetching JSON file:', error.message);

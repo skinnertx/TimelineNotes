@@ -66,6 +66,31 @@ func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
+func serveImage(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	s3Key := vars["imageName"]
+	s3ObjectKey, err := getS3KeyFromName(s3Key)
+	if err != nil {
+		fmt.Println("Error getting s3 key from name:", err)
+		return
+	}
+	fmt.Println("found s3ObjectKey:", s3ObjectKey)
+
+	// Set appropriate headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET")
+	w.Header().Set("Content-Type", "image/png")
+
+	// Write the file content as the response
+	fileContents, err := getFileContents(s3ObjectKey)
+	if err != nil {
+		fmt.Println("Error getting file contents:", err)
+		return
+	}
+	w.Write(fileContents)
+}
+
 func serveFile(w http.ResponseWriter, r *http.Request) {
 
 	// TODO return error in HTTP?
@@ -128,6 +153,10 @@ func bulkUploadNotes(dirPath string, chopDrive bool) {
 
 	// anything remaining in file list should be uploaded to s3, need to map to neo4j
 	for _, file := range fileList {
+
+		if !strings.Contains(file, ".md") {
+			continue
+		}
 
 		// parse markdown file for media
 		media, err := getImagesFromMarkdownFile(file)
