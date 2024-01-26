@@ -1,20 +1,19 @@
-// TODO
-// display markdown file
-// allow editing of markdown file
-// add custom parsing of markdown file
-// editor library:
-// https://github.com/Ionaru/easy-markdown-editor#configuration
 import React, { useState, useEffect } from 'react';
-import {micromark} from 'micromark'
-import {gfmFootnote, gfmFootnoteHtml} from 'micromark-extension-gfm-footnote'
+import { micromark } from 'micromark';
+import { gfmFootnote, gfmFootnoteHtml } from 'micromark-extension-gfm-footnote';
 import { useParams } from 'react-router-dom';
-
+import CodeMirrorEditor from '../components/CodeMirrorEditor';
 
 export default function MicromarkFile() {
 
-    const [markdown, setMarkdown] = useState([]);
+    // Markdown file as a string, used for update detection
+    const [markdownString, setMarkdownString] = useState('');
+    // Markdown file as HTML, used for display
+    const [outputHtml, setOutputHtml] = useState('');
+
     const { file } = useParams();
 
+    // on mount, retrieve the Markdown file
     useEffect(() => {
         const fetchMarkdown = async () => {
             try {
@@ -24,26 +23,40 @@ export default function MicromarkFile() {
                 }
 
                 const markdownText = await response.text();
+                setMarkdownString(markdownText);
 
-                const output = micromark(markdownText, {
-                    extensions: [gfmFootnote()],
-                    htmlExtensions: [gfmFootnoteHtml()]
-                  })
-
-                setMarkdown(output);
             } catch (error) {
                 console.error('Error fetching Markdown file:', error.message);
             }
-        }
+        };
 
         fetchMarkdown();
-    }   , []); // Empty dependency array means this effect runs once on component mount
+    }, [file]);
+
+    // on mount and whenever the Markdown string changes, convert it to HTML
+    useEffect(() => {
+        const output = micromark(markdownString, {
+            extensions: [gfmFootnote()],
+            htmlExtensions: [gfmFootnoteHtml()]
+        });
+
+        setOutputHtml(output);
+    }, [markdownString]);
+
+    // when the Markdown editor changes, update the Markdown string
+    const handleMarkdownChange = (newValue) => {
+        console.log('Markdown changed:');
+        setMarkdownString(newValue);
+    };
 
     return (
         <div>
             <h1>Markdown File</h1>
-            <div dangerouslySetInnerHTML={{ __html: markdown}} />
+
+            <CodeMirrorEditor initialValue={markdownString} handleChange={handleMarkdownChange} />
+
+            <h1>Markdown Preview</h1>
+            <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
         </div>
     );
 }
-
