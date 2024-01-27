@@ -59,9 +59,30 @@ func main() {
 
 	// set up endpoints
 	r := mux.NewRouter()
+
+	// Enable CORS middleware
+	corsMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	// Attach the CORS middleware to the router
+	r.Use(corsMiddleware)
+
 	r.HandleFunc("/api/getfile/{fileName}", serveFile)
 	r.HandleFunc("/api/hierarchy/{dirName}", serveHierarchy)
 	r.HandleFunc("/api/getImage/{imageName}", serveImage)
+	r.HandleFunc("/api/upload", uploadFile)
 
 	err = http.ListenAndServe(":8080", r)
 	if err != nil {

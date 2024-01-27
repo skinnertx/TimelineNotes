@@ -40,6 +40,35 @@ func getHierarchy(parent *Neo4jNode) error {
 	return nil
 }
 
+func uploadFile(w http.ResponseWriter, r *http.Request) {
+
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		fmt.Println("Error parsing multipart form:", err)
+		return
+	}
+
+	file, fileHeader, err := r.FormFile("file")
+	if err != nil {
+		fmt.Println("Error retrieving file from form:", err)
+		return
+	}
+	defer file.Close()
+
+	filename := fileHeader.Filename
+	fmt.Println("Uploaded filename:", filename)
+
+	err = uploadToS3(file, filename)
+	if err != nil {
+		fmt.Println("Error uploading file to S3:", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Printf("File %s uploaded successfully!\n", filename)
+
+}
+
 func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
@@ -58,9 +87,9 @@ func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set appropriate headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET")
-	w.Header().Set("Content-Type", "application/json")
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	// w.Header().Set("Access-Control-Allow-Methods", "GET")
+	// w.Header().Set("Content-Type", "application/json")
 
 	// Write the file content as the response
 	w.Write(jsonData)
@@ -78,9 +107,9 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("found s3ObjectKey:", s3ObjectKey)
 
 	// Set appropriate headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET")
-	w.Header().Set("Content-Type", "image/png")
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	// w.Header().Set("Access-Control-Allow-Methods", "GET")
+	// w.Header().Set("Content-Type", "image/png")
 
 	// Write the file content as the response
 	fileContents, err := getFileContents(s3ObjectKey)
@@ -107,9 +136,9 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 	// Set appropriate headers
 
 	// TODO: make this more secure
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET")
-	w.Header().Set("Content-Type", "text/plain")
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	// w.Header().Set("Access-Control-Allow-Methods", "GET")
+	// w.Header().Set("Content-Type", "text/plain")
 
 	// Write the file content as the response
 	fileContents, err := getFileContents(s3ObjectKey)

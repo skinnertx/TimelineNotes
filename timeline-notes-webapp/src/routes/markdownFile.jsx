@@ -13,8 +13,6 @@ export default function MicromarkFile() {
 
     const { file } = useParams();
 
-
-
     // on mount, retrieve the Markdown file
     useEffect(() => {
         const fetchMarkdown = async () => {
@@ -72,11 +70,36 @@ export default function MicromarkFile() {
         setMarkdownString(newValue);
     };
 
+    const handleSaveMarkdown = async () => {
+        try {
+
+            const blob = new Blob([markdownString], { type: 'text/plain' });
+
+            const formData = new FormData();
+            formData.append('file', blob, file);
+
+            const response = await fetch('http://localhost:8080/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to save Markdown file (status ${response.status})`);
+            }
+
+            console.log('Markdown file saved successfully!');
+        } catch (error) {
+            console.error('Error saving Markdown file:', error.message);
+        }
+    };
+
     return (
         <div>
             <h1>Markdown File</h1>
 
             <CodeMirrorEditor initialValue={markdownString} handleChange={handleMarkdownChange} />
+
+            <button onClick={handleSaveMarkdown}>Save Markdown</button>
 
             <h1>Markdown Preview</h1>
             <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
