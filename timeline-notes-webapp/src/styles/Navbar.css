@@ -1,0 +1,43 @@
+.navbar {
+    width: 100%;
+    background: rgb(159,39,199);
+    background: linear-gradient(90deg, rgba(159,39,199,1) 16%, rgba(140,84,204,1) 36%, rgba(103,68,220,1) 70%, rgba(21,107,217,1) 88%); /* Change the background color as needed */
+    color: white; 
+    padding: 10px 20px; 
+    display: flex; 
+    align-items: center; 
+  }
+  
+  .navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+  
+  .navbar ul li {
+    display: inline;
+    margin-right: 20px; 
+    display: flex; 
+    align-items: center; 
+  }
+  
+  .navbar ul li:last-child {
+    margin-right: 0; 
+  }
+  
+  .navbar ul li a {
+    color: white; 
+    text-decoration: none;
+    font-size: 20px;
+  }
+
+  .navbar ul li a:hover {
+    color: lightblue; /* Change text color on hover */
+  }
+
+  .title {
+    font-size: 25px;
+    font-weight: bold;
+  }
+  

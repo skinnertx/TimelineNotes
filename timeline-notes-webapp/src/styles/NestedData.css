@@ -1,0 +1,42 @@
+/* Style for the list items */
+.NestedData li {
+    position: relative;
+    list-style-type: none; /* Remove default bullet points */
+    display: inline-block;
+    vertical-align: top;
+  }
+  
+  /* Style for the lines connecting the list items */
+  .NestedData li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+  }
+
+  .NestedData ul:last-child {
+    padding-bottom: 15px;
+  }
+  
+  /* Style for the nested lists */
+  .NestedData ul {
+    margin-left: 0; /* Adjust the indentation of nested lists */
+    padding-left: 20px;
+    
+  }
+
+.folderBar {
+    display: flex;
+    align-items: center;
+    padding-bottom: 15px;
+
+}
+
+.folderBar li {
+    margin-right: 10px;
+}
+
+.folderIcon {
+    height: 20px;
+    width: 20px;
+    margin-right: 10px;
+}

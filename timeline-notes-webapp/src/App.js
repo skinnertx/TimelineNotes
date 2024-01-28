@@ -1,6 +1,5 @@
 
-import './App.css';
-import MarkdownViewer from './components/Markdown';
+import './styles/App.css';
 import Root from './routes/root';
 import ErrorPage from './error-page';
 import {Route, Routes} from "react-router-dom";

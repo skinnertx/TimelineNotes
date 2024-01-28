@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import includes from 'lodash/includes';
+import '../styles/NestedData.css';
+import FolderIcon from '../assets/folderIcon.png';
+
 
 export default function NestedData({ data }) {
   const isLink = includes(data.name, '.');
@@ -75,7 +78,8 @@ export default function NestedData({ data }) {
   if (isLink) {
     // Render a hyperlink if the node has a '.' character in its name
     return (
-      <ul>
+      <ul className='NestedData'>
+        --
         <li>
           <Link to={linkName}>{data.name}</Link>
         </li>
@@ -84,9 +88,11 @@ export default function NestedData({ data }) {
   }
 
   return (
-    <ul>
-      <div>
+    <ul className='NestedData'>
+      <div className='folderBar'>
+        
         <li onClick={toggleOpen} style={{ cursor: 'pointer' }}>
+          <img className='folderIcon' src={FolderIcon} alt="Folder Icon" />
           {data.name}
         </li>
         <button onClick={handleCreateFile}>Create File</button>
