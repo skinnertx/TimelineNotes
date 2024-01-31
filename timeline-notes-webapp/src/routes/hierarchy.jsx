@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import NestedData from '../components/NestedData';
 import TreeView from '../components/TreeView';
 
 
 export default function Hierarchy() {
 
     const [hierarchy, setHierarchy] = useState([]);
-    const [folderPath, setFolderPath] = useState([0]);
       
     useEffect(() => {
       const fetchHierarchy = async () => {
@@ -34,10 +32,7 @@ export default function Hierarchy() {
     return (
         <div>
           <h1>Data from Go Backend</h1>
-          <div>
-            <NestedData data={hierarchy} />
-            <TreeView data={hierarchy} />
-          </div>
+          <TreeView data={hierarchy} />
           
         </div>
       );

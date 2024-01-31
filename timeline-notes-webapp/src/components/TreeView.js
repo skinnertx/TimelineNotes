@@ -1,5 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import '../styles/TreeView.css';
+import purpFolder from '../assets/purpFolder.png';
+import blueFile from '../assets/blueFile.png';
 
 export default function TreeView({data}) {
 
@@ -28,6 +30,27 @@ export default function TreeView({data}) {
           setviewedNode(clickedNode);
         } else {
           // need to trace from path down to find the node
+          // build up the stack of nodes from the root to the current node
+          const nodeStack = [];
+          let currentNode = data;
+          for (const pathNode of currentPath) {
+            nodeStack.push(currentNode);
+            currentNode = currentNode.children.find(child => child.name === pathNode);
+            if (!currentNode) return;
+          }
+
+          // search the stack for the clicked node from the bottom up
+          for (let i = nodeStack.length - 1; i >= 0; i--) {
+            const childNode = nodeStack[i].children.find(child => child.name === nodeName);
+            if (childNode) {
+              const newCurrentPath = currentPath.slice(0, i);
+              setCurrentPath([...newCurrentPath, nodeName]);
+              setExpandedNodes(new Set(newCurrentPath.concat(nodeName)));
+              setviewedNode(childNode);
+              return;
+            }
+          }
+
         }
       };
     
@@ -46,9 +69,16 @@ export default function TreeView({data}) {
       }
 
     // check if a node is expanded
+    // TODO, if file has same name later in hierarrchy, this breaks
     const isNodeExpanded = (nodeName) => {
         return expandedNodes.has(nodeName);
     };
+
+    const resetToRoot = () => {
+      setCurrentPath([]);
+      setExpandedNodes(new Set([data.name]));
+      setviewedNode(data);
+    }
 
     // render the tree recursively, this is the kickstarter, deals with root case
     const renderTree = (node) => {
@@ -58,7 +88,7 @@ export default function TreeView({data}) {
       
         return (
           <ul>
-            {node.name}
+            <button onClick={resetToRoot}>root</button>
             {renderChildren(node)}
           </ul>
         );
@@ -69,30 +99,47 @@ export default function TreeView({data}) {
     // TODO, handle clicking on files  
     // render the children of a node recursively, the real meat and potatoes
     const renderChildren = (node) => {
-        return (
-            <ul>
-                {node.children.map((child) => (
-                    <li key={child.name}>
-                    <button onClick={() => handleNodeClick(child.name)}>{child.name}</button>
-                    {isNodeExpanded(child.name) && renderChildren(child)}
-                    </li>
-                ))}
-            </ul>
-        );
-    };
-
-    const renderFolder = (node) => {
-      if (!node || !node.children || node.children.length === 0) {
-        return null;
-      }
-
       return (
-        <ul>
-          <div>root/{currentPath.join('/')}</div>
-          {renderChildren(node)}
-        </ul>
+          <ul>
+              {node.children
+                  .filter(child => !child.name.includes('.')) // Filter out children with '.'
+                  .map((child) => (
+                      <li key={child.name}>
+                          <button onClick={() => handleNodeClick(child.name)}>{child.name}</button>
+                          {isNodeExpanded(child.name) && renderChildren(child)}
+                      </li>
+                  ))}
+          </ul>
       );
-    };
+  };
+
+  const renderFolder = (node) => {
+    if (!node || !node.children || node.children.length === 0) {
+      return null;
+    }
+  
+    return (
+      <div className="folder-container">
+        <div>root/{currentPath.join('/')}</div>
+        <div className="grid-container">
+          {node.children.map((child) => (
+            <div key={child.name} className="grid-item">
+              <button onClick={() => handleNodeClick(child.name)}>
+                {child.name.includes('.') ? (
+                  <img className='icon' src={blueFile} alt={child.name} />
+                ) : (
+                  <img className='icon' src={purpFolder} alt={child.name} />
+                )}
+                <p className='item-name'>{child.name}</p>
+
+              </button>
+              
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
       
     // render the tree view, this is the main component that is exported
     return (

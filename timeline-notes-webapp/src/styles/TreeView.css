@@ -16,3 +16,56 @@
 .folder {
     flex: 4;
 }
+
+.folder-container {
+    max-height: 300px; /* Adjust as needed */
+    overflow: auto;
+  }
+  
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+    gap: 10px; /* Adjust as needed */
+}
+
+.grid-item {
+    position: relative;
+    width: 120px; /* Adjust width as needed */
+    height: 120px; /* Adjust height as needed */
+    overflow: hidden;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+  }
+  
+  .grid-item button {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .icon {
+    position: absolute;
+    top: 10%; /* Position the icon vertically centered */
+    left: 50%; /* Position the icon horizontally centered */
+    transform: translate(-50%, -50%);
+    width: 50px; /* Adjust width as needed */
+    height: auto; /* Adjust height as needed */
+  }
+  
+  .item-name {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Number of lines to show */
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+    white-space: normal;
+    max-height: 2em; /* Adjust based on line height and font size */
+    margin-top: auto;
+    padding: 5px;
+  }
+  
