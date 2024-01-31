@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import NestedData from '../components/NestedData';
+import TreeView from '../components/TreeView';
 
 
 export default function Hierarchy() {
 
     const [hierarchy, setHierarchy] = useState([]);
-  
+    const [folderPath, setFolderPath] = useState([0]);
+      
     useEffect(() => {
       const fetchHierarchy = async () => {
         try {
@@ -15,10 +17,11 @@ export default function Hierarchy() {
             throw new Error(`Failed to fetch JSON file (status ${response.status})`);
           }
 
-  
           const hierarchyJson = await response.json();
 
           setHierarchy(hierarchyJson);
+          
+
         } catch (error) {
           console.error('Error fetching JSON file:', error.message);
         }
@@ -27,10 +30,15 @@ export default function Hierarchy() {
       fetchHierarchy();
     }, []); // Empty dependency array means this effect runs once on component mount
 
+    
     return (
         <div>
           <h1>Data from Go Backend</h1>
-          <NestedData data={hierarchy} />
+          <div>
+            <NestedData data={hierarchy} />
+            <TreeView data={hierarchy} />
+          </div>
+          
         </div>
       );
 

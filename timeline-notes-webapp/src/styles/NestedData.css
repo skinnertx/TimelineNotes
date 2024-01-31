@@ -24,19 +24,42 @@
     
   }
 
-.folderBar {
+.folderIcons {
     display: flex;
     align-items: center;
     padding-bottom: 15px;
 
 }
 
-.folderBar li {
-    margin-right: 10px;
-}
-
 .folderIcon {
     height: 20px;
     width: 20px;
-    margin-right: 10px;
+
+}
+
+.addButton {
+    padding: 0px;
+    border: none;
+    cursor: pointer;
+    background-color: transparent; /* Set background color to transparent */
+    border: none; /* Remove border */
+}
+
+.additional-icons {
+  display: none; /* Initially hide the additional icons */
+}
+
+.additional-icons.show {
+  display: flex; /* Show the additional icons */
+  /* Add your animation styles here */
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+  }
+  to {
+      opacity: 1;
+  }
 }

@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import includes from 'lodash/includes';
 import '../styles/NestedData.css';
 import FolderIcon from '../assets/folderIcon.png';
+import purpFolder from '../assets/purpFolder.png';
+import purpFolderAdd from '../assets/purpFolderAdd.png';
+import purpFile from '../assets/purpFile.png';
+import purpFileAdd from '../assets/purpFileAdd.png';
+import purpPlus from '../assets/add.png';
 
 
 export default function NestedData({ data }) {
@@ -87,16 +92,45 @@ export default function NestedData({ data }) {
     );
   }
 
+  function toggleIcons(event) {
+    console.log(event.target);
+    const button = event.target.closest('.addButton');
+    console.log(button);
+    if (button) {
+        const sibling = button.nextElementSibling;
+        if (sibling && sibling.classList.contains('additional-icons')) {
+            sibling.classList.toggle('show');
+        }
+    }
+  }
+
+  // TODO show file explorer on left side of screen,
+  // hierarchy on right side of screen
+
   return (
     <ul className='NestedData'>
-      <div className='folderBar'>
-        
+      <div className='folderIcons'>
+
         <li onClick={toggleOpen} style={{ cursor: 'pointer' }}>
-          <img className='folderIcon' src={FolderIcon} alt="Folder Icon" />
+          <img className='folderIcon' src={purpFolder} alt="Folder Icon" />
           {data.name}
         </li>
-        <button onClick={handleCreateFile}>Create File</button>
-        <button onClick={handleCreateDirectory}>Create Directory</button>
+        
+        <button className="addButton" onClick={toggleIcons}>
+            <img className='folderIcon' src={purpPlus} alt="Folder Icon" />
+        </button>
+
+        <div className="additional-icons">
+          <button onClick={handleCreateFile} className='addButton'>
+            <img className='folderIcon' src={purpFileAdd} alt="File Add Icon" />
+          </button>
+          <button onClick={handleCreateDirectory} className='addButton'>
+            <img className='folderIcon' src={purpFolderAdd} alt="Folder Add Icon" />
+          </button>
+        </div>
+
+        
+        
       </div>
 
       {/* Render new file input if creating a file */}

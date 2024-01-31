@@ -1,0 +1,18 @@
+.explorerContainer {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+.fileTree {
+    flex: 1;
+}
+
+.fileTree ul {
+    list-style-type: none;
+    padding-left: 15px;
+}
+
+.folder {
+    flex: 4;
+}
