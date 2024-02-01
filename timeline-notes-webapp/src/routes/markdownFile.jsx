@@ -35,17 +35,28 @@ export default function MicromarkFile() {
 
     // Define a custom function to replace image links with <img> tags
     const replaceImageLinks = (markdownContent) => {
-    
+        
+        // get name of parent folder
+        const splits = file.split('.')
+        const parentFile = splits[1]
+
+        // const firstPeriod = file.indexOf('.')
+        // const parentFile = file.slice(firstPeriod+1)
+        // console.log(parentFile)
+ 
+
         // Regular expression to match Markdown image syntax: ![alt text](image URL)
         const imageLinkRegex = /!\[.*?\]\((.*?)\)/g;
     
         // Replace image links with <img> tags pointing to S3 URLs
         const modifiedMarkdown = markdownContent.replace(imageLinkRegex, (match, imageUrl) => {
             // Extract the image name from the URL
-            const imageName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+            let imageName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+            // add parent folder
             // Construct the S3 URL based on your bucket URL and the image name
-            const s3Url = `http://localhost:8080/api/getImage/${imageName}`;
-            return `![alt text](${s3Url})`;
+            const s3Url = `http://localhost:8080/api/getImage/${parentFile}/${imageName}`;
+            const encodedURL = s3Url.replace(/ /g, '%20');
+            return `![alt text](${encodedURL})`;
         });
     
         return modifiedMarkdown;

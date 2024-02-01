@@ -88,8 +88,10 @@ func getContainedNodes(dirName string) ([]string, error) {
 	return nodes, nil
 }
 
-func getS3KeyFromName(name string) (string, error) {
-	fmt.Printf("Getting s3 key for file: %s\n", name)
+func getS3KeyForImage(parent string, name string) (string, error) {
+	fmt.Printf("Getting s3 key for image: %s\n", name)
+
+	fmt.Println("p ", parent)
 
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
@@ -97,9 +99,10 @@ func getS3KeyFromName(name string) (string, error) {
 	fmt.Println("Executing Neo4j query...")
 
 	result, err := session.Run(ctx,
-		"MATCH (n) WHERE (n:File OR n:Media) AND n.name = $name RETURN n.s3key",
+		"MATCH (f:File {name: $parent})-[:LINKED]->(m:Media {name: $child}) RETURN m",
 		map[string]interface{}{
-			"name": name,
+			"parent": (parent + ".md"),
+			"child":  name,
 		},
 	)
 
@@ -109,7 +112,69 @@ func getS3KeyFromName(name string) (string, error) {
 	}
 
 	if result.Next(ctx) {
-		s3key, exists := result.Record().Get("n.s3key")
+		record := result.Record()
+		fileNode, exists := record.Get("m")
+		if !exists {
+			return "", fmt.Errorf("media Node not found: %s", name)
+		}
+
+		dbFileNode, ok := fileNode.(dbtype.Node)
+		if !ok {
+			return "", fmt.Errorf("Unexpected type for mediaNode")
+		}
+
+		s3key, exists := dbFileNode.Props["s3key"]
+		if !exists {
+			return "", fmt.Errorf("S3 key not found for media: %s", name)
+		}
+		return s3key.(string), nil
+	}
+
+	return "", fmt.Errorf("Media not found: %s", name)
+
+}
+
+func getS3KeyFromName(name string) (string, error) {
+	fmt.Printf("Getting s3 key for file: %s\n", name)
+
+	splits := strings.SplitN(name, ".", 2)
+	if len(splits) < 2 {
+		return "", fmt.Errorf("Error splitting fileName and path")
+	}
+	parent := splits[0]
+	child := splits[1]
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	fmt.Println("Executing Neo4j query...")
+
+	result, err := session.Run(ctx,
+		"MATCH (d:Directory {name: $parent})-[:CONTAINS]->(f:File {name: $child}) RETURN f",
+		map[string]interface{}{
+			"parent": parent,
+			"child":  child,
+		},
+	)
+
+	if err != nil {
+		fmt.Println("Error executing Neo4j query:", err)
+		return "", err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		fileNode, exists := record.Get("f")
+		if !exists {
+			return "", fmt.Errorf("File Node not found: %s", name)
+		}
+
+		dbFileNode, ok := fileNode.(dbtype.Node)
+		if !ok {
+			return "", fmt.Errorf("Unexpected type for fileNode")
+		}
+
+		s3key, exists := dbFileNode.Props["s3key"]
 		if !exists {
 			return "", fmt.Errorf("S3 key not found for file: %s", name)
 		}

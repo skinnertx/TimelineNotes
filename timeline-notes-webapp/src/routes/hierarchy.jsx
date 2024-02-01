@@ -5,6 +5,8 @@ import TreeView from '../components/TreeView';
 export default function Hierarchy() {
 
     const [hierarchy, setHierarchy] = useState([]);
+
+    const [showSpinner, setShowSpinner] = useState(true);
       
     useEffect(() => {
       const fetchHierarchy = async () => {
@@ -18,6 +20,15 @@ export default function Hierarchy() {
           const hierarchyJson = await response.json();
 
           setHierarchy(hierarchyJson);
+
+          // allow TreeView to update all state
+          const timer = setTimeout(() => {
+            setShowSpinner(false); 
+          }, 800); 
+
+          // Cleanup function to clear the timer
+          return () => clearTimeout(timer);
+          
           
 
         } catch (error) {
@@ -28,11 +39,21 @@ export default function Hierarchy() {
       fetchHierarchy();
     }, []); // Empty dependency array means this effect runs once on component mount
 
+
     
     return (
         <div>
           <h1>Data from Go Backend</h1>
-          <TreeView data={hierarchy} />
+          <div>
+            {showSpinner ? (
+              <div>
+                LOADING
+              </div>
+            ) : (
+              <TreeView data={hierarchy} />
+            )}
+          </div>
+          
           
         </div>
       );

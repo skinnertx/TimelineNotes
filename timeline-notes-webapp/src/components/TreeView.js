@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import '../styles/TreeView.css';
 import purpFolder from '../assets/purpFolder.png';
 import blueFile from '../assets/blueFile.png';
+import { useNavigate } from 'react-router-dom';
 
 export default function TreeView({data}) {
 
@@ -14,12 +15,18 @@ export default function TreeView({data}) {
 
     const [viewedNode, setviewedNode] = useState();
 
+    const [filePath, setFilePath] = useState('')
+
+    const navigate = useNavigate();
+
     useEffect(() => {
+      
       setviewedNode(data);
+      
     }, [data]);
 
     // when a node is clicked, add it to the current path and expand it
-    const handleNodeClick = (nodeName) => {      
+    const handleNodeClick = (nodeName) => {     
 
         // Check if the clicked node is a direct child of the current node
         // TODO, if it is not, try checking upper levels to find it?
@@ -113,6 +120,12 @@ export default function TreeView({data}) {
       );
   };
 
+  const handleFileClick = (nodeName) => {
+    let constructedPath = viewedNode.name + '.' + nodeName
+    constructedPath = '/markdown/' + constructedPath
+    navigate(constructedPath)
+  }
+
   const renderFolder = (node) => {
     if (!node || !node.children || node.children.length === 0) {
       return null;
@@ -124,15 +137,17 @@ export default function TreeView({data}) {
         <div className="grid-container">
           {node.children.map((child) => (
             <div key={child.name} className="grid-item">
-              <button onClick={() => handleNodeClick(child.name)}>
-                {child.name.includes('.') ? (
+              {child.name.includes('.') ? (
+                <button onClick={() => handleFileClick(child.name)}>
                   <img className='icon' src={blueFile} alt={child.name} />
+                  <p className='item-name'>{child.name}</p>
+                </button>
                 ) : (
-                  <img className='icon' src={purpFolder} alt={child.name} />
-                )}
-                <p className='item-name'>{child.name}</p>
-
-              </button>
+                  <button onClick={() => handleNodeClick(child.name)}>
+                    <img className='icon' src={purpFolder} alt={child.name} />
+                    <p className='item-name'>{child.name}</p>
+                  </button>
+              )}
               
             </div>
           ))}

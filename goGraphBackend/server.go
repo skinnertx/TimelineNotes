@@ -81,7 +81,7 @@ func main() {
 
 	r.HandleFunc("/api/getfile/{fileName}", serveFile)
 	r.HandleFunc("/api/hierarchy/{dirName}", serveHierarchy)
-	r.HandleFunc("/api/getImage/{imageName}", serveImage)
+	r.HandleFunc("/api/getImage/{parentFile}/{imageName}", serveImage)
 	r.HandleFunc("/api/upload", uploadFile)
 
 	err = http.ListenAndServe(":8080", r)

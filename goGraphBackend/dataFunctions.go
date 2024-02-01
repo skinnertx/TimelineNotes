@@ -98,8 +98,9 @@ func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 func serveImage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-	s3Key := vars["imageName"]
-	s3ObjectKey, err := getS3KeyFromName(s3Key)
+	parentFile := vars["parentFile"]
+	imageName := vars["imageName"]
+	s3ObjectKey, err := getS3KeyForImage(parentFile, imageName)
 	if err != nil {
 		fmt.Println("Error getting s3 key from name:", err)
 		return
