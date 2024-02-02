@@ -6,6 +6,7 @@ import {Route, Routes} from "react-router-dom";
 import Navbar from './components/Navbar';
 import Hierarchy from './routes/hierarchy';
 import MicromarkFile from './routes/markdownFile';
+import TimelineHierarchy from './routes/timelineHierarchy';
 
 function App() {
   return (
@@ -27,6 +28,11 @@ function App() {
           path="/hierarchy"
           element={<Hierarchy />}
           errorElement={<ErrorPage/>} 
+        />
+        <Route
+          path="/timeline-hierarchy"
+          element={<TimelineHierarchy />}
+          errorElement={<ErrorPage/>}
         />
       </Routes>
     </div>

@@ -21,8 +21,8 @@ type Neo4jNode struct {
 	Children []*Neo4jNode `json:"children,omitempty"`
 }
 
-func getHierarchy(parent *Neo4jNode) error {
-	children, err := getContainedNodes(parent.Name)
+func getHierarchy(parent *Neo4jNode, isTimeline bool) error {
+	children, err := getContainedNodes(parent.Name, isTimeline)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func getHierarchy(parent *Neo4jNode) error {
 	for _, child := range children {
 		parent.Children = append(parent.Children, &Neo4jNode{Name: child})
 		if !strings.Contains(child, ".") {
-			err = getHierarchy(parent.Children[len(parent.Children)-1])
+			err = getHierarchy(parent.Children[len(parent.Children)-1], isTimeline)
 			if err != nil {
 				return err
 			}
@@ -69,6 +69,22 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func serveTimelineHierarchy(w http.ResponseWriter, r *http.Request) {
+	tlroot := &Neo4jNode{Name: "tlroot"}
+	err := getHierarchy(tlroot, true)
+	if err != nil {
+		fmt.Println("Error getting timeline hierarchy:", err)
+	}
+
+	jsonData, err := json.Marshal(tlroot)
+	if err != nil {
+		fmt.Println("Error marshalling json:", err)
+	}
+
+	w.Write(jsonData)
+
+}
+
 func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
@@ -77,7 +93,7 @@ func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 		dirName = "root"
 	}
 	root := &Neo4jNode{Name: dirName}
-	err := getHierarchy(root)
+	err := getHierarchy(root, false)
 	if err != nil {
 		fmt.Println("Error getting hierarchy:", err)
 	}

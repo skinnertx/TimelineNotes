@@ -13,6 +13,10 @@ export default function MicromarkFile() {
 
     const { file } = useParams();
 
+    // get name of parent folder
+    const splits = file.split('.')
+    const parentFile = splits[1]
+
     // on mount, retrieve the Markdown file
     useEffect(() => {
         const fetchMarkdown = async () => {
@@ -35,16 +39,7 @@ export default function MicromarkFile() {
 
     // Define a custom function to replace image links with <img> tags
     const replaceImageLinks = (markdownContent) => {
-        
-        // get name of parent folder
-        const splits = file.split('.')
-        const parentFile = splits[1]
-
-        // const firstPeriod = file.indexOf('.')
-        // const parentFile = file.slice(firstPeriod+1)
-        // console.log(parentFile)
- 
-
+    
         // Regular expression to match Markdown image syntax: ![alt text](image URL)
         const imageLinkRegex = /!\[.*?\]\((.*?)\)/g;
     

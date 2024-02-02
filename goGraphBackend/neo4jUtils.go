@@ -57,17 +57,29 @@ type FileNode struct {
 	s3key string
 }
 
-func getContainedNodes(dirName string) ([]string, error) {
+func getContainedNodes(dirName string, isTimeline bool) ([]string, error) {
 
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	result, err := session.Run(ctx,
-		"MATCH (d:Directory {name: $name})-[:CONTAINS]->(n) RETURN n",
-		map[string]any{
-			"name": dirName,
-		},
-	)
+	var result neo4j.ResultWithContext
+	var err error
+
+	if isTimeline {
+		result, err = session.Run(ctx,
+			"MATCH (d:TimelineDirectory {name: $name})-[:CONTAINS]->(n) RETURN n",
+			map[string]any{
+				"name": dirName,
+			},
+		)
+	} else {
+		result, err = session.Run(ctx,
+			"MATCH (d:Directory {name: $name})-[:CONTAINS]->(n) RETURN n",
+			map[string]any{
+				"name": dirName,
+			},
+		)
+	}
 
 	if err != nil {
 		fmt.Println("Error executing Neo4j query:", err)

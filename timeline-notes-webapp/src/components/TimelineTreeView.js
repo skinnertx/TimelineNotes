@@ -1,29 +1,33 @@
 import React, {useEffect, useState} from 'react';
-import '../styles/TreeView.css';
+import '../styles/TimelineTreeView.css';
 import purpFolder from '../assets/purpFolder.png';
+import purpFolderAdd from '../assets/purpFolderAdd.png'
 import blueFile from '../assets/blueFile.png';
+import backArrow from '../assets/replyArrow.png'
+import folderIcon from '../assets/folderIcon.png'
 import { useNavigate } from 'react-router-dom';
 
-export default function TreeView({data}) {
+export default function TimelineTreeView({originalData}) {
 
     // stack that tracks the current path through file tree
     // starts with the root folder implied 
     // IMPORTANT!!!! EMPTY ARRAY IS THE ROOT FOLDER
     const [currentPath, setCurrentPath] = useState([]);
     // set that tracks which nodes are expanded currently
-    const [expandedNodes, setExpandedNodes] = useState(new Set([data.name]));
+    const [expandedNodes, setExpandedNodes] = useState(new Set([originalData.name]));
 
     const [viewedNode, setviewedNode] = useState();
 
-    const [filePath, setFilePath] = useState('')
+    const [data, setData] = useState();
 
     const navigate = useNavigate();
 
     useEffect(() => {
       
-      setviewedNode(data);
+      setviewedNode(originalData);
+      setData(originalData)
       
-    }, [data]);
+    }, [originalData]);
 
     // when a node is clicked, add it to the current path and expand it
     const handleNodeClick = (nodeName) => {     
@@ -96,7 +100,10 @@ export default function TreeView({data}) {
       
         return (
           <ul>
-            <button onClick={resetToRoot}>root</button>
+            <button className='expButton' onClick={resetToRoot}>
+                <img className='expIcon' alt='folderIcon' src={folderIcon} />
+                tlroot
+            </button>
             {renderChildren(node)}
           </ul>
         );
@@ -113,23 +120,92 @@ export default function TreeView({data}) {
 
       return (
           <ul>
-              {node.children
+                {node.children
                   .filter(child => !child.name.includes('.')) // Filter out children with '.'
                   .map((child) => (
                       <li key={child.name}>
-                          <button onClick={() => handleNodeClick(child.name)}>{child.name}</button>
-                          {isNodeExpanded(child.name) && renderChildren(child)}
+                            <button className='expButton' onClick={() => handleNodeClick(child.name)}>
+                                <img className='expIcon' alt='folderIcon' src={folderIcon} />
+                                {child.name}
+                            </button>
+                            {isNodeExpanded(child.name) && renderChildren(child)}
                       </li>
                   ))}
           </ul>
       );
   };
 
-  const handleFileClick = (nodeName) => {
+  const handleTimelineClick = (nodeName) => {
+
+    alert("clicked " + nodeName)
+    return
+
     let constructedPath = viewedNode.name + '.' + nodeName
     constructedPath = '/markdown/' + constructedPath
     navigate(constructedPath)
   }
+
+  const handleAddFolder = () => {
+    const newFolderName = prompt("Enter folder name:");
+    if (newFolderName) {
+        const newFolder = {
+            name: newFolderName,
+            children: []
+        };
+
+        //TODO add the folder to neo4j, if that fails, return with error!
+
+        // Update the state to include the new folder as a child of the viewedNode
+        setviewedNode(prevState => {
+            const updatedNode = {
+                ...prevState,
+                children: [...prevState.children, newFolder]
+            };
+
+            // Update the data prop with the new child folder as well
+            const updatedData = updateData(data, currentPath, updatedNode);
+            setData(updatedData)
+            return updatedNode;
+        });
+    }
+  };
+
+  const updateData = (data, currentPath, updatedNode) => {
+    if (!currentPath || currentPath.length === 0) {
+      // If currentPath is empty, update the root data directly
+      return updatedNode;
+    }
+  
+    let newData = { ...data };
+    let currentNode = newData;
+  
+    for (let i = 0; i < currentPath.length; i++) {
+      const nodeName = currentPath[i];
+      const childNode = currentNode.children.find(child => child.name === nodeName);
+  
+      if (!childNode) {
+        // If the current path does not exist in the data, return the original data
+        return data;
+      }
+  
+      if (i === currentPath.length - 1) {
+        // If we've reached the last node in the current path, update its children
+        const updatedChildren = currentNode.children.map(child => {
+          if (child.name === nodeName) {
+            return updatedNode;
+          } else {
+            return child;
+          }
+        });
+        currentNode.children = updatedChildren;
+      } else {
+        // If not the last node, continue traversing the data structure
+        currentNode = childNode;
+      }
+    }
+  
+    return newData;
+  };
 
   const renderFolder = (node) => {
     if (!node) {
@@ -137,13 +213,21 @@ export default function TreeView({data}) {
     }
   
     return (
-      <div className="folder-container">
-        <div>{data.name}/{currentPath.join('/')}</div>
-        <div className="grid-container">
+      <div className="tlfolder-container">
+        <div className='pathline'>
+            <button onClick={handleBackClick}>
+                <img src={backArrow} alt='back arrow'/>
+            </button>
+            <button onClick={handleAddFolder}>
+                <img src={purpFolderAdd} alt='add folder' />
+            </button>
+            {data.name}/{currentPath.join('/')}
+        </div>
+        <div className="tlgrid-container">
           {node.children && node.children.length > 0 && node.children.map((child) => (
             <div key={child.name} className="grid-item">
               {child.name.includes('.') ? (
-                <button onClick={() => handleFileClick(child.name)}>
+                <button onClick={() => handleTimelineClick(child.name)}>
                   <img className='icon' src={blueFile} alt={child.name} />
                   <p className='item-name'>{child.name}</p>
                 </button>
@@ -153,7 +237,6 @@ export default function TreeView({data}) {
                     <p className='item-name'>{child.name}</p>
                   </button>
               )}
-              
             </div>
           ))}
         </div>
@@ -165,13 +248,13 @@ export default function TreeView({data}) {
     return (
       <div>
           <div>
-            <h2>Tree View</h2>
+            <h2>Timeline Tree View</h2>
             <div className='explorerContainer'>
               
               <div className='fileTree'>
                 {renderTree(data)}
               </div>
-              <div className='folder'>
+              <div className='tlfolder'>
                 {renderFolder(viewedNode)}
               </div>
             </div>
