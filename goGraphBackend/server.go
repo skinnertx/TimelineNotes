@@ -79,12 +79,15 @@ func main() {
 	// Attach the CORS middleware to the router
 	r.Use(corsMiddleware)
 
-	r.HandleFunc("/api/getfile/{fileName}", serveFile)
 	r.HandleFunc("/api/hierarchy/{dirName}", serveHierarchy)
 	r.HandleFunc("/api/timelineHierarchy", serveTimelineHierarchy)
-	r.HandleFunc("/api/getImage/{parentFile}/{imageName}", serveImage)
-	r.HandleFunc("/api/upload", uploadFile)
-	r.HandleFunc("/api/create/TimelineFolder/{parentFolder}/{childFolder}", createTLFolder)
+
+	r.HandleFunc("/api/upload/markdown/{parentFolder}", uploadMarkdownFile)
+
+	r.HandleFunc("/api/serve/getImage/{parentFile}/{imageName}", serveImageFile)
+	r.HandleFunc("/api/serve/getMarkdown/{parentFolder}/{fileName}", serveMarkdownFile)
+
+	r.HandleFunc("/api/create/TimelineFolder/{parentFolder}/{childFolder}", createTLObject)
 	r.HandleFunc("/api/delete/TimelineFolder/{parentFolder}/{childFolder}", deleteTLObject)
 
 	err = http.ListenAndServe(":8080", r)

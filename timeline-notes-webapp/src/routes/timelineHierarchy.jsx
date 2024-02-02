@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TimelineTreeView from '../components/TimelineTreeView';
+import config from '../config';
 
 export default function TimelineHierarchy() {
 
@@ -10,7 +11,9 @@ export default function TimelineHierarchy() {
     useEffect(() => {
       const fetchHierarchy = async () => {
         try {
-          const response = await fetch('http://localhost:8080/api/timelineHierarchy');
+          
+          const tlhURL = config.backendBaseUrl + 'timelineHierarchy';
+          const response = await fetch(tlhURL);
   
           if (!response.ok) {
             throw new Error(`Failed to fetch JSON file (status ${response.status})`);

@@ -129,13 +129,31 @@ export default function TimelineTreeView({originalData}) {
         };
   
         // TODO: update neo4j with a new timeline
+        const newTimelineURL = `http://localhost:8080/api/create/TimelineFolder/${viewedNode.name}/${newTimelineName}`
+          fetch(newTimelineURL, {
+            method: 'POST'
+          }).then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+          }).catch(error => {
+            console.error('Removal Error: , error')
+          })
+
   
         // Update the state to include the new folder as a child of the viewedNode
         setviewedNode(prevState => {
+            let newChildren = []
+            if (prevState && prevState.children) {
+              newChildren = [...prevState.children, newTimeline]
+            } else {
+              newChildren = [newTimeline]
+            }
+
             const updatedNode = {
-                ...prevState,
-                children: [...prevState.children, newTimeline]
-            };
+              name: viewedNode.name,
+              children: [...newChildren]
+            }
   
             // Update the data prop with the new child folder as well
             const updatedData = updateData(data, currentPath, updatedNode);

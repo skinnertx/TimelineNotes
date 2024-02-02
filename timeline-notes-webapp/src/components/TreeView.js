@@ -15,7 +15,7 @@ export default function TreeView({data}) {
 
     const [viewedNode, setviewedNode] = useState();
 
-    const [filePath, setFilePath] = useState('')
+    // const [filePath, setFilePath] = useState('')
 
     const navigate = useNavigate();
 
@@ -126,7 +126,7 @@ export default function TreeView({data}) {
   };
 
   const handleFileClick = (nodeName) => {
-    let constructedPath = viewedNode.name + '.' + nodeName
+    let constructedPath = viewedNode.name + '/' + nodeName
     constructedPath = '/markdown/' + constructedPath
     navigate(constructedPath)
   }

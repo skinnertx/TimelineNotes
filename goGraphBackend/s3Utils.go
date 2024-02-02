@@ -32,20 +32,14 @@ func establishS3Connection() *s3.S3 {
 	return svc
 }
 
-func uploadToS3(file io.ReadSeeker, fName string) error {
+func uploadMarkdownToS3(file io.ReadSeeker, s3key string) error {
 
-	s3key, err := getS3KeyFromName(fName)
-	if err != nil {
-		fmt.Println("Error getting s3 key:", err)
-		return err
-	}
-
-	_, err = svc.PutObject(&s3.PutObjectInput{
+	_, err := svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(s3key),
 		Body:   file,
 	})
-	
+
 	if err != nil {
 		fmt.Println("Error uploading file:", err)
 		return err

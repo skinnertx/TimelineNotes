@@ -3,6 +3,7 @@ import { micromark } from 'micromark';
 import { gfmFootnote, gfmFootnoteHtml } from 'micromark-extension-gfm-footnote';
 import { useParams } from 'react-router-dom';
 import CodeMirrorEditor from '../components/CodeMirrorEditor';
+import config from '../config';
 
 export default function MicromarkFile() {
 
@@ -11,17 +12,16 @@ export default function MicromarkFile() {
     // Markdown file as HTML, used for display
     const [outputHtml, setOutputHtml] = useState('');
 
-    const { file } = useParams();
+    const { parent, file } = useParams();
 
     // get name of parent folder
-    const splits = file.split('.')
-    const parentFile = splits[1]
 
     // on mount, retrieve the Markdown file
     useEffect(() => {        
         const fetchMarkdown = async () => {
             try {
-                const response = await fetch('http://localhost:8080/api/getfile/' + file);
+                const mdURL = config.backendBaseUrl + `serve/getMarkdown/${parent}/${file}`
+                const response = await fetch(mdURL);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch Markdown file (status ${response.status})`);
                 }
@@ -35,7 +35,7 @@ export default function MicromarkFile() {
         };
 
         fetchMarkdown();
-    }, [file]);
+    }, [parent, file]);
 
     // Define a custom function to replace image links with <img> tags
     const replaceImageLinks = (markdownContent) => {
@@ -47,9 +47,11 @@ export default function MicromarkFile() {
         const modifiedMarkdown = markdownContent.replace(imageLinkRegex, (match, imageUrl) => {
             // Extract the image name from the URL
             let imageName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+
+            console.log(file + '/' + imageName)
             // add parent folder
             // Construct the S3 URL based on your bucket URL and the image name
-            const s3Url = `http://localhost:8080/api/getImage/${parentFile}/${imageName}`;
+            const s3Url = config.backendBaseUrl +  `serve/getImage/${file}/${imageName}`;
             const encodedURL = s3Url.replace(/ /g, '%20');
             return `![alt text](${encodedURL})`;
         });
@@ -84,7 +86,8 @@ export default function MicromarkFile() {
             const formData = new FormData();
             formData.append('file', blob, file);
 
-            const response = await fetch('http://localhost:8080/api/upload', {
+            const uploadURL = config.backendBaseUrl + `upload/markdown/${parent}`
+            const response = await fetch(uploadURL, {
                 method: 'POST',
                 body: formData,
             });

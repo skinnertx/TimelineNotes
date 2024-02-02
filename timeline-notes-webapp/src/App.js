@@ -20,7 +20,7 @@ function App() {
           errorElement={<ErrorPage/>}
         />
         <Route 
-          path="/markdown/:file" 
+          path="/markdown/:parent/:file" 
           element={<MicromarkFile />} 
           errorElement={<ErrorPage/>}
         />

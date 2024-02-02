@@ -113,7 +113,7 @@ func getS3KeyForImage(parent string, name string) (string, error) {
 	result, err := session.Run(ctx,
 		"MATCH (f:File {name: $parent})-[:LINKED]->(m:Media {name: $child}) RETURN m",
 		map[string]interface{}{
-			"parent": (parent + ".md"),
+			"parent": (parent),
 			"child":  name,
 		},
 	)
@@ -122,6 +122,8 @@ func getS3KeyForImage(parent string, name string) (string, error) {
 		fmt.Println("Error executing Neo4j query:", err)
 		return "", err
 	}
+
+	fmt.Println(result)
 
 	if result.Next(ctx) {
 		record := result.Record()
@@ -146,16 +148,8 @@ func getS3KeyForImage(parent string, name string) (string, error) {
 
 }
 
-// name should be in the form of "<parentFolder>.<filename>"
-func getS3KeyFromName(name string) (string, error) {
-	fmt.Printf("Getting s3 key for file: %s\n", name)
-
-	splits := strings.SplitN(name, ".", 2)
-	if len(splits) < 2 {
-		return "", fmt.Errorf("Error splitting fileName and path")
-	}
-	parent := splits[0]
-	child := splits[1]
+func getMarkdowns3Key(parent string, fileName string) (string, error) {
+	fmt.Printf("Getting s3 key for file: %s\n", fileName)
 
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
@@ -166,7 +160,7 @@ func getS3KeyFromName(name string) (string, error) {
 		"MATCH (d:Directory {name: $parent})-[:CONTAINS]->(f:File {name: $child}) RETURN f",
 		map[string]interface{}{
 			"parent": parent,
-			"child":  child,
+			"child":  fileName,
 		},
 	)
 
@@ -179,7 +173,7 @@ func getS3KeyFromName(name string) (string, error) {
 		record := result.Record()
 		fileNode, exists := record.Get("f")
 		if !exists {
-			return "", fmt.Errorf("File Node not found: %s", name)
+			return "", fmt.Errorf("File Node not found: %s", fileName)
 		}
 
 		dbFileNode, ok := fileNode.(dbtype.Node)
@@ -189,12 +183,12 @@ func getS3KeyFromName(name string) (string, error) {
 
 		s3key, exists := dbFileNode.Props["s3key"]
 		if !exists {
-			return "", fmt.Errorf("S3 key not found for file: %s", name)
+			return "", fmt.Errorf("S3 key not found for file: %s", fileName)
 		}
 		return s3key.(string), nil
 	}
 
-	return "", fmt.Errorf("File not found: %s", name)
+	return "", fmt.Errorf("File not found: %s", fileName)
 }
 
 /*
@@ -299,6 +293,26 @@ func removeTimelineObject(parent string, child string) error {
 
 	return err
 
+}
+
+func matchCreateTimeline(parent string, child string) error {
+
+	fmt.Println("making ", parent, "/", child)
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	_, err := session.Run(ctx,
+		"MATCH (p:TimelineDirectory {name: $parent})"+
+			"MERGE (p)-[:CONTAINS]->(c:Timeline {name:$child})"+
+			"RETURN c",
+		map[string]interface{}{
+			"parent": parent,
+			"child":  child,
+		},
+	)
+
+	return err
 }
 
 func matchCreateTimelineFolder(parent string, child string) error {

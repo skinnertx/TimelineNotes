@@ -40,7 +40,10 @@ func getHierarchy(parent *Neo4jNode, isTimeline bool) error {
 	return nil
 }
 
-func uploadFile(w http.ResponseWriter, r *http.Request) {
+func uploadMarkdownFile(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	parent := vars["parentFolder"]
 
 	err := r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
@@ -55,18 +58,19 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	filename := fileHeader.Filename
-	fmt.Println("Uploaded filename:", filename)
+	fileName := fileHeader.Filename
+	fmt.Println("Uploaded filename:", fileName)
 
-	err = uploadToS3(file, filename)
+	s3key, err := getMarkdowns3Key(parent, fileName)
+
+	err = uploadMarkdownToS3(file, s3key)
 	if err != nil {
 		fmt.Println("Error uploading file to S3:", err)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Printf("File %s uploaded successfully!\n", filename)
-
+	fmt.Printf("File %s uploaded successfully!\n", fileName)
 }
 
 func serveTimelineHierarchy(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +115,7 @@ func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func createTLFolder(w http.ResponseWriter, r *http.Request) {
+func createTLObject(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	parent := vars["parentFolder"]
@@ -119,14 +123,24 @@ func createTLFolder(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("creating %s/%s\n", parent, child)
 
-	err := matchCreateTimelineFolder(parent, child)
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Failed to create node", http.StatusInternalServerError)
-		return
+	if strings.Contains(child, ".tl") {
+		err := matchCreateTimeline(parent, child)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Failed to create node", http.StatusInternalServerError)
+			return
+		}
+
+	} else {
+		err := matchCreateTimelineFolder(parent, child)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Failed to create node", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	fmt.Println("success creating TLFolder")
+	fmt.Println("success creating TLObject")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Node created successfully"))
 }
@@ -148,11 +162,12 @@ func deleteTLObject(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Node removed successfully"))
 }
 
-func serveImage(w http.ResponseWriter, r *http.Request) {
+func serveImageFile(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	parentFile := vars["parentFile"]
 	imageName := vars["imageName"]
+
 	s3ObjectKey, err := getS3KeyForImage(parentFile, imageName)
 	if err != nil {
 		fmt.Println("Error getting s3 key from name:", err)
@@ -160,11 +175,6 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("found s3ObjectKey:", s3ObjectKey)
 
-	// Set appropriate headers
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
-	// w.Header().Set("Access-Control-Allow-Methods", "GET")
-	// w.Header().Set("Content-Type", "image/png")
-
 	// Write the file content as the response
 	fileContents, err := getFileContents(s3ObjectKey)
 	if err != nil {
@@ -174,34 +184,52 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 	w.Write(fileContents)
 }
 
-func serveFile(w http.ResponseWriter, r *http.Request) {
-
-	// TODO return error in HTTP?
+func serveMarkdownFile(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-	s3Key := vars["fileName"]
-	s3ObjectKey, err := getS3KeyFromName(s3Key)
-	if err != nil {
-		fmt.Println("Error getting s3 key from name:", err)
-		return
-	}
-	fmt.Println("found s3ObjectKey:", s3ObjectKey)
+	parent := vars["parentFolder"]
+	fileName := vars["fileName"]
 
-	// Set appropriate headers
-
-	// TODO: make this more secure
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
-	// w.Header().Set("Access-Control-Allow-Methods", "GET")
-	// w.Header().Set("Content-Type", "text/plain")
+	s3Key, err := getMarkdowns3Key(parent, fileName)
 
 	// Write the file content as the response
-	fileContents, err := getFileContents(s3ObjectKey)
+	fileContents, err := getFileContents(s3Key)
 	if err != nil {
 		fmt.Println("Error getting file contents:", err)
 		return
 	}
 	w.Write(fileContents)
+
 }
+
+// func serveFile(w http.ResponseWriter, r *http.Request) {
+
+// 	// TODO return error in HTTP?
+
+// 	vars := mux.Vars(r)
+// 	s3Key := vars["fileName"]
+// 	s3ObjectKey, err := getS3KeyFromName(s3Key)
+// 	if err != nil {
+// 		fmt.Println("Error getting s3 key from name:", err)
+// 		return
+// 	}
+// 	fmt.Println("found s3ObjectKey:", s3ObjectKey)
+
+// 	// Set appropriate headers
+
+// 	// TODO: make this more secure
+// 	// w.Header().Set("Access-Control-Allow-Origin", "*")
+// 	// w.Header().Set("Access-Control-Allow-Methods", "GET")
+// 	// w.Header().Set("Content-Type", "text/plain")
+
+// 	// Write the file content as the response
+// 	fileContents, err := getFileContents(s3ObjectKey)
+// 	if err != nil {
+// 		fmt.Println("Error getting file contents:", err)
+// 		return
+// 	}
+// 	w.Write(fileContents)
+// }
 
 // specific function for uploading hierarchical notes from windows folder
 // NOTE: root should already exist somewhere in the database before this is called
