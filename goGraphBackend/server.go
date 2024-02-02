@@ -85,6 +85,7 @@ func main() {
 	r.HandleFunc("/api/getImage/{parentFile}/{imageName}", serveImage)
 	r.HandleFunc("/api/upload", uploadFile)
 	r.HandleFunc("/api/create/TimelineFolder/{parentFolder}/{childFolder}", createTLFolder)
+	r.HandleFunc("/api/delete/TimelineFolder/{parentFolder}/{childFolder}", deleteTLObject)
 
 	err = http.ListenAndServe(":8080", r)
 	if err != nil {

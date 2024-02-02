@@ -283,6 +283,24 @@ func getImagesFromMarkdownFile(filePath string) ([]string, error) {
 ******************************************************************
 */
 
+func removeTimelineObject(parent string, child string) error {
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	fmt.Println("Executing Neo4j query...")
+
+	_, err := session.Run(ctx,
+		"MATCH (p:TimelineDirectory {name: $parent})-[:CONTAINS]->(c) WHERE c.name = $child DETACH DELETE c RETURN p",
+		map[string]interface{}{
+			"parent": parent,
+			"child":  child,
+		},
+	)
+
+	return err
+
+}
+
 func matchCreateTimelineFolder(parent string, child string) error {
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)

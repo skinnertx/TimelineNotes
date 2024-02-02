@@ -113,8 +113,6 @@ func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 
 func createTLFolder(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("here")
-
 	vars := mux.Vars(r)
 	parent := vars["parentFolder"]
 	child := vars["childFolder"]
@@ -131,6 +129,23 @@ func createTLFolder(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("success creating TLFolder")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Node created successfully"))
+}
+
+func deleteTLObject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	parent := vars["parentFolder"]
+	child := vars["childFolder"]
+
+	err := removeTimelineObject(parent, child)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to remove node", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("success removing TL object")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Node removed successfully"))
 }
 
 func serveImage(w http.ResponseWriter, r *http.Request) {
