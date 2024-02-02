@@ -18,7 +18,7 @@ export default function MicromarkFile() {
     const parentFile = splits[1]
 
     // on mount, retrieve the Markdown file
-    useEffect(() => {
+    useEffect(() => {        
         const fetchMarkdown = async () => {
             try {
                 const response = await fetch('http://localhost:8080/api/getfile/' + file);

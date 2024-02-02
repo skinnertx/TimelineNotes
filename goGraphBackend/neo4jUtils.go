@@ -146,6 +146,7 @@ func getS3KeyForImage(parent string, name string) (string, error) {
 
 }
 
+// name should be in the form of "<parentFolder>.<filename>"
 func getS3KeyFromName(name string) (string, error) {
 	fmt.Printf("Getting s3 key for file: %s\n", name)
 
@@ -281,6 +282,25 @@ func getImagesFromMarkdownFile(filePath string) ([]string, error) {
 	DATABASE MODIFICATION FUNCTIONS
 ******************************************************************
 */
+
+func matchCreateTimelineFolder(parent string, child string) error {
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	fmt.Println("Executing Neo4j query...")
+
+	_, err := session.Run(ctx,
+		"MATCH (p:TimelineDirectory {name: $parent})"+
+			"MERGE (p)-[:CONTAINS]->(c:TimelineDirectory {name:$child})"+
+			"RETURN c",
+		map[string]interface{}{
+			"parent": parent,
+			"child":  child,
+		},
+	)
+
+	return err
+}
 
 // create directory node and link to parent directory node
 func matchCreateDirNode(parent string, child string) {

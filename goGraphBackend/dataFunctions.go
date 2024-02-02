@@ -111,6 +111,28 @@ func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
+func createTLFolder(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("here")
+
+	vars := mux.Vars(r)
+	parent := vars["parentFolder"]
+	child := vars["childFolder"]
+
+	fmt.Printf("creating %s/%s\n", parent, child)
+
+	err := matchCreateTimelineFolder(parent, child)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to create node", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("success creating TLFolder")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Node created successfully"))
+}
+
 func serveImage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
