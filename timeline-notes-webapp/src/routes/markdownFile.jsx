@@ -4,6 +4,7 @@ import { gfmFootnote, gfmFootnoteHtml } from 'micromark-extension-gfm-footnote';
 import { useParams } from 'react-router-dom';
 import CodeMirrorEditor from '../components/CodeMirrorEditor';
 import config from '../config';
+import '../styles/MarkdownFile.css'
 
 export default function MicromarkFile() {
 
@@ -69,7 +70,10 @@ export default function MicromarkFile() {
             htmlExtensions: [gfmFootnoteHtml()]
         });
 
-        setOutputHtml(output);
+        // make internal links open new tabs when clicked
+        const modifiedHtmlContent = output.replace(/<a\s+(?:[^>]*)>/gi, '<a target="_blank" $&');
+
+        setOutputHtml(modifiedHtmlContent);
     }, [markdownString]);
 
     // when the Markdown editor changes, update the Markdown string
@@ -111,7 +115,7 @@ export default function MicromarkFile() {
             <button onClick={handleSaveMarkdown}>Save Markdown</button>
 
             <h1>Markdown Preview</h1>
-            <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
+            <div className='markdownHTML' dangerouslySetInnerHTML={{ __html: outputHtml }} />
         </div>
     );
 }
