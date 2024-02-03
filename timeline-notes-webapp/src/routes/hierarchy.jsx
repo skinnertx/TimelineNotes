@@ -50,7 +50,7 @@ export default function Hierarchy() {
                 LOADING
               </div>
             ) : (
-              <TreeView data={hierarchy} />
+              <TreeView originalData={hierarchy} />
             )}
           </div>
           

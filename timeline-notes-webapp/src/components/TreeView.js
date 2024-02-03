@@ -2,18 +2,35 @@ import React, {useEffect, useState} from 'react';
 import '../styles/TreeView.css';
 import purpFolder from '../assets/purpFolder.png';
 import blueFile from '../assets/blueFile.png';
+import folderIcon from '../assets/folderIcon.png'
+import backArrow from '../assets/replyArrow.png'
+import purpFolderAdd from '../assets/purpFolderAdd.png'
+import purpFileAdd from '../assets/purpFileAdd.png'
 import { useNavigate } from 'react-router-dom';
+import trashCan from '../assets/trash.png'
 
-export default function TreeView({data}) {
+
+/* 
+  I'm aware how silly it is to have the TreeView and TimelineTreeView js objects
+  and how unmaintainable given how similar they are, but there are slight differences
+  and i developed them at different times so this is how it will be
+
+  Maybe future me will comeback and merge these monstrosities but not now
+*/
+
+
+export default function TreeView({originalData}) {
 
     // stack that tracks the current path through file tree
     // starts with the root folder implied 
     // IMPORTANT!!!! EMPTY ARRAY IS THE ROOT FOLDER
     const [currentPath, setCurrentPath] = useState([]);
     // set that tracks which nodes are expanded currently
-    const [expandedNodes, setExpandedNodes] = useState(new Set([data.name]));
+    const [expandedNodes, setExpandedNodes] = useState(new Set([originalData.name]));
 
     const [viewedNode, setviewedNode] = useState();
+
+    const [data, setData] = useState();
 
     // const [filePath, setFilePath] = useState('')
 
@@ -21,15 +38,20 @@ export default function TreeView({data}) {
 
     useEffect(() => {
       
-      setviewedNode(data);
+      setviewedNode(originalData);
+      setData(originalData)
       
-    }, [data]);
+    }, [originalData]);
+
+    // ==============================================================
+    //                  HANDLERS FOR BUTTONS
+    //                 THAT DONT MODIFY STATE
+    // ==============================================================
 
     // when a node is clicked, add it to the current path and expand it
     const handleNodeClick = (nodeName) => {     
 
         // Check if the clicked node is a direct child of the current node
-        // TODO, if it is not, try checking upper levels to find it?
         if (!viewedNode.children) return;
         const clickedNode = viewedNode.children.find(child => child.name === nodeName);
         if (clickedNode) {
@@ -76,35 +98,208 @@ export default function TreeView({data}) {
         setviewedNode(currentNode);
       }
 
-    // check if a node is expanded
-    // TODO, if file has same name later in hierarrchy, this breaks
-    const isNodeExpanded = (nodeName) => {
-        return expandedNodes.has(nodeName);
-    };
-
+    
     const resetToRoot = () => {
       setCurrentPath([]);
       setExpandedNodes(new Set([data.name]));
       setviewedNode(data);
     }
 
+    const handleFileClick = (nodeName) => {
+      let constructedPath = viewedNode.name + '/' + nodeName
+      constructedPath = '/markdown/' + constructedPath
+      navigate(constructedPath)
+    }
+
+    // ==============================================================
+    //                  HANDLERS FOR BUTTONS
+    //               THAT ***DO*** MODIFY STATE
+    // ==============================================================
+
+    // handle add md file
+    const handleAddFile = () => {
+
+    }
+
+
+    // handle add folder
+    const handleAddFolder = () => {
+      const newFolderName = prompt("Enter folder name:");
+      if (newFolderName) {
+          const newFolder = {
+              name: newFolderName,
+              children: []
+          };
+  
+          // add the folder to neo4j, if that fails, return with error!
+          const newFolderURL = `http://localhost:8080/api/create/Folder/${viewedNode.name}/${newFolderName}`
+          fetch(newFolderURL, {
+            method: 'POST'
+          }).then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+          }).catch(error => {
+            console.error('Removal Error: , error')
+          })
+          
+  
+          // Update the state to include the new folder as a child of the viewedNode
+          setviewedNode(prevState => {
+              const updatedNode = {
+                  ...prevState,
+                  children: [...prevState.children, newFolder]
+              };
+  
+              // Update the data prop with the new child folder as well
+              const updatedData = updateData(data, currentPath, updatedNode);
+              setData(updatedData)
+              return updatedNode;
+          });
+      }
+    };
+
+
+    // handle remove object
+    const handleRemoveObject = (objectNameToRemove) => {
+  
+      const confirmed = window.confirm('Are you sure you want to delete ' + objectNameToRemove + '?')
+      if(!confirmed) return;
+      
+      if (objectNameToRemove) {
+        // Check if the object exists in the current node's children
+        const objectToRemove = viewedNode.children.find(child => child.name === objectNameToRemove);
+        if (objectToRemove.children && (objectToRemove.children.length > 0)) {
+          alert("cant delete folder with contents")
+          return
+        }
+        if (objectToRemove) {
+  
+          // update neo4j, if it fails, return
+          const removeFolderURL = `http://localhost:8080/api/delete/Folder/${viewedNode.name}/${objectNameToRemove}`
+          fetch(removeFolderURL, {
+            method: 'POST'
+          }).then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+          }).catch(error => {
+            console.error('Removal Error: , error')
+          })
+  
+          // Remove the object from the data structure
+          const updatedData = removeData(data, currentPath, objectNameToRemove);
+          setData(updatedData);
+          
+          // Update the state to reflect the removed object
+          setviewedNode(prevState => {
+            const updatedNode = {
+              ...prevState,
+              children: prevState.children.filter(child => child.name !== objectNameToRemove)
+            };
+            return updatedNode;
+          });
+        } else {
+          alert(`Object "${objectNameToRemove}" not found.`);
+        }
+      }
+    };
+
+    // helper function that modifies data accordingly
+    const removeData = (data, currentPath, nodeNameToRemove) => {
+    
+      let newData = { ...data };
+      let currentNode = newData;
+    
+      for (let i = 0; i < currentPath.length; i++) {
+        const nodeName = currentPath[i];
+        const childNode = currentNode.children.find(child => child.name === nodeName);
+    
+        if (!childNode) {
+          // If the current path does not exist in the data, return the original data
+          return data;
+        }
+        
+        currentNode = childNode;
+      }
+  
+      const updatedChildren = currentNode.children.filter(child => child.name !== nodeNameToRemove);
+      currentNode.children = updatedChildren;
+    
+      return newData;
+    };
+
+    // helper function that modifies data accordingly
+    const updateData = (data, currentPath, updatedNode) => {
+      if (!currentPath || currentPath.length === 0) {
+        // If currentPath is empty, update the root data directly
+        return updatedNode;
+      }
+    
+      let newData = { ...data };
+      let currentNode = newData;
+    
+      for (let i = 0; i < currentPath.length; i++) {
+        const nodeName = currentPath[i];
+        const childNode = currentNode.children.find(child => child.name === nodeName);
+    
+        if (!childNode) {
+          // If the current path does not exist in the data, return the original data
+          return data;
+        }
+    
+        if (i === currentPath.length - 1) {
+          // If we've reached the last node in the current path, update its children
+          const updatedChildren = currentNode.children.map(child => {
+            if (child.name === nodeName) {
+              return updatedNode;
+            } else {
+              return child;
+            }
+          });
+          currentNode.children = updatedChildren;
+        } else {
+          // If not the last node, continue traversing the data structure
+          currentNode = childNode;
+        }
+      }
+    
+      return newData;
+    };
+
+
+
+    // ==============================================================
+    //                      UTILITY FUNCTIONS
+    // ==============================================================
+
+    // check if a node is expanded
+    // TODO, if file has same name later in hierarrchy, this breaks
+    const isNodeExpanded = (nodeName) => {
+        return expandedNodes.has(nodeName);
+    };
+
+    // ==============================================================
+    //                      RENDERING FUNCTIONS
+    // ==============================================================
+
     // render the tree recursively, this is the kickstarter, deals with root case
     const renderTree = (node) => {
-        if (!node || !node.children || node.children.length === 0) {
+        if (!node) {
           return null;
         }
-      
+        
         return (
           <ul>
-            <button onClick={resetToRoot}>root</button>
+            <button className='expButton' onClick={resetToRoot}>
+              <img className='expIcon' alt='folderIcon' src={folderIcon} />
+              root
+            </button>
             {renderChildren(node)}
           </ul>
         );
     };
 
-
-    // TODO, create UI to view the children
-    // TODO, handle clicking on files  
     // render the children of a node recursively, the real meat and potatoes
     const renderChildren = (node) => {
       if (!node || !node.children || node.children.length === 0) {
@@ -117,7 +312,10 @@ export default function TreeView({data}) {
                   .filter(child => !child.name.includes('.')) // Filter out children with '.'
                   .map((child) => (
                       <li key={child.name}>
-                          <button onClick={() => handleNodeClick(child.name)}>{child.name}</button>
+                          <button className='expButton' onClick={() => handleNodeClick(child.name)}>
+                            <img className='expIcon' alt='folderIcon' src={folderIcon} />
+                            {child.name}
+                          </button>
                           {isNodeExpanded(child.name) && renderChildren(child)}
                       </li>
                   ))}
@@ -125,11 +323,7 @@ export default function TreeView({data}) {
       );
   };
 
-  const handleFileClick = (nodeName) => {
-    let constructedPath = viewedNode.name + '/' + nodeName
-    constructedPath = '/markdown/' + constructedPath
-    navigate(constructedPath)
-  }
+
 
   const renderFolder = (node) => {
     if (!node) {
@@ -138,17 +332,31 @@ export default function TreeView({data}) {
   
     return (
       <div className="folder-container">
-        <div>{data.name}/{currentPath.join('/')}</div>
+        <div className='pathline'>
+            <button onClick={handleBackClick}>
+                <img src={backArrow} alt='back arrow'/>
+            </button>
+            <button onClick={handleAddFolder}>
+                <img src={purpFolderAdd} alt='add folder' />
+            </button>
+            <button onClick={handleAddFile}> 
+              <img src={purpFileAdd} alt='add file' />
+            </button>
+            {data.name}/{currentPath.join('/')}
+        </div>
         <div className="grid-container">
           {node.children && node.children.length > 0 && node.children.map((child) => (
             <div key={child.name} className="grid-item">
+              <button className='delete-button' onClick={() => handleRemoveObject(child.name)}>
+                <img src={trashCan} alt='delete'/>
+              </button>
               {child.name.includes('.') ? (
-                <button onClick={() => handleFileClick(child.name)}>
+                <button className='grid-button' onClick={() => handleFileClick(child.name)}>
                   <img className='icon' src={blueFile} alt={child.name} />
                   <p className='item-name'>{child.name}</p>
                 </button>
                 ) : (
-                  <button onClick={() => handleNodeClick(child.name)}>
+                  <button className='grid-button' onClick={() => handleNodeClick(child.name)}>
                     <img className='icon' src={purpFolder} alt={child.name} />
                     <p className='item-name'>{child.name}</p>
                   </button>

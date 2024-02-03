@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -98,35 +97,7 @@ func clearBucket() error {
 	return nil
 }
 
-func uploadObjectToS3(fName string, chopDrive bool) error {
 
-	// Open the file for use
-	file, err := os.Open(fName)
-	defer file.Close()
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return err
-	}
-
-	// hacky fix to remove drive letter from file path for windows machines
-	if chopDrive {
-		fName = removeDriveLetter(fName)
-	}
-
-	// Upload the file to the S3 bucket
-	_, err = svc.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(fName),
-		Body:   file,
-	})
-	if err != nil {
-		fmt.Println("Error uploading file:", err)
-		return err
-	}
-
-	fmt.Println("File uploaded successfully!")
-	return nil
-}
 
 func listObjectsinS3() {
 	// Specify your bucket name

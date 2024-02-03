@@ -129,6 +129,8 @@ export default function TimelineTreeView({originalData}) {
         };
   
         // TODO: update neo4j with a new timeline
+        // timeline names must be unique
+        // add timeline addition func to markdown editor!
         const newTimelineURL = `http://localhost:8080/api/create/TimelineFolder/${viewedNode.name}/${newTimelineName}`
           fetch(newTimelineURL, {
             method: 'POST'

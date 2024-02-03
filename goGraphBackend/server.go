@@ -88,7 +88,10 @@ func main() {
 	r.HandleFunc("/api/serve/getMarkdown/{parentFolder}/{fileName}", serveMarkdownFile)
 
 	r.HandleFunc("/api/create/TimelineFolder/{parentFolder}/{childFolder}", createTLObject)
+	r.HandleFunc("/api/create/Folder/{parentFolder}/{childFolder}", createFolderObject)
+
 	r.HandleFunc("/api/delete/TimelineFolder/{parentFolder}/{childFolder}", deleteTLObject)
+	r.HandleFunc("/api/delete/Folder/{parentFolder}/{childFolder}", deleteFolderObject)
 
 	err = http.ListenAndServe(":8080", r)
 	if err != nil {

@@ -11,7 +11,7 @@ export default function TimelineHierarchy() {
     useEffect(() => {
       const fetchHierarchy = async () => {
         try {
-          
+
           const tlhURL = config.backendBaseUrl + 'timelineHierarchy';
           const response = await fetch(tlhURL);
   
@@ -52,8 +52,6 @@ export default function TimelineHierarchy() {
               <TimelineTreeView originalData={hierarchy} />
             )}
           </div>
-          
-          
         </div>
       );
 

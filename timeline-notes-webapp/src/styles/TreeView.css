@@ -1,71 +1,180 @@
 .explorerContainer {
-    display: flex;
-    flex-direction: row;
-    overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  background-color: #E5eaec;
+  min-height: 70vh;
+  border: 3px solid #ced3d4;
+}
+
+.childNode {
+  display: flex;
+  align-items: center;
+}
+
+.expIcon {
+  height: 20px;
+  width: 20px;
+  margin-right: 5px;
+}
+
+.expButton {
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  justify-content: center;
+  border-radius: 5px;
+  margin-right: 10px;
+  color:rgb(92, 25, 154);
+  font-size: 18px;
+  font-family: inherit;
+}
+
+.expButton:active {
+  background-color: #ced3d4;
 }
 
 .fileTree {
-    flex: 1;
+  flex: 1;
+  border-right: 3px solid #ced3d4;
 }
 
 .fileTree ul {
-    list-style-type: none;
-    padding-left: 15px;
+  list-style-type: none;
+  padding-left: 15px;
 }
 
 .folder {
-    flex: 4;
+  flex: 4;
 }
 
 .folder-container {
-    max-height: 300px; /* Adjust as needed */
-    overflow: auto;
-  }
-  
+  overflow: hidden;
+  flex: 1;
+  height: 100%;
+  max-height: calc(100vh - 80px);
+}
+
+.pathline {
+  font-size: 30px;
+  color:rgb(92, 25, 154);;
+
+  margin-left: 10px;
+
+}
+
+.pathline button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  justify-content: center;
+  border-radius: 5px;
+  margin-right: 10px;
+  top: 5px;
+}
+
+.pathline button:active {
+   background-color: #ced3d4;
+}
+
+.pathline button img {
+  padding-top: 10px;
+  width: 30px;
+  height: 30px;
+}
+
 .grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-    gap: 10px; /* Adjust as needed */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+  gap: 10px; /* Adjust as needed */
+  margin: 10px;
+  padding: 10px;
+  background-color: white;
+  border-radius: 5px;
+  height: 85%;
 }
 
 .grid-item {
-    position: relative;
-    width: 120px; /* Adjust width as needed */
-    height: 120px; /* Adjust height as needed */
-    overflow: hidden;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-  }
+  position: relative;
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  position: relative; /* Ensure the grid item is positioned */
+}
+
+.delete-button {
+  position: absolute;
+  top: 0;
+  right: 30px;
+  width: 28px; /* Set the width of the delete button */
+  height: 28px; /* Set the height of the delete button */
+  padding: 5px; /* Add padding to provide space around the button */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  z-index: 1; /* Ensure the button is above other content */
+  border-radius: 15px;
+  background: white;
+  border: #ced3d4 solid 1px;
+  display: none;
+  cursor: pointer;
+}
+
+.delete-button img {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  top:-4px;
+  left:-5px;
+  width: 25px; /* Set the width of the delete button */
+  height: 25px;
+
+}
+
+.grid-item:hover .delete-button {
+  display: block
+}
+
+.grid-button {
   
-  .grid-item button {
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: none;
-    cursor: pointer;
-    position: relative;
-  }
+}
+
+.grid-item .grid-button {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  justify-content: center;
   
-  .icon {
-    position: absolute;
-    top: 10%; /* Position the icon vertically centered */
-    left: 50%; /* Position the icon horizontally centered */
-    transform: translate(-50%, -50%);
-    width: 50px; /* Adjust width as needed */
-    height: auto; /* Adjust height as needed */
-  }
-  
-  .item-name {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Number of lines to show */
-    -webkit-box-orient: vertical;
-    text-overflow: ellipsis;
-    white-space: normal;
-    max-height: 2em; /* Adjust based on line height and font size */
-    margin-top: auto;
-    padding: 5px;
-  }
-  
+}
+
+
+.icon {
+  position: absolute;
+  top: 20%; /* Position the icon vertically centered */
+   /* Position the icon horizontally centered */
+  transform: translate(-50%, -50%);
+  width: 50px; /* Adjust width as needed */
+  height: auto; /* Adjust height as needed */
+}
+
+.item-name {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  white-space: normal;
+  max-height: 2em;
+  padding: 5px;
+  font-family: 'Work Sans';
+}

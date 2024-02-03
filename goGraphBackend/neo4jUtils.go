@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j/dbtype"
@@ -103,8 +102,6 @@ func getContainedNodes(dirName string, isTimeline bool) ([]string, error) {
 func getS3KeyForImage(parent string, name string) (string, error) {
 	fmt.Printf("Getting s3 key for image: %s\n", name)
 
-	fmt.Println("p ", parent)
-
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
@@ -122,8 +119,6 @@ func getS3KeyForImage(parent string, name string) (string, error) {
 		fmt.Println("Error executing Neo4j query:", err)
 		return "", err
 	}
-
-	fmt.Println(result)
 
 	if result.Next(ctx) {
 		record := result.Record()
@@ -295,6 +290,41 @@ func removeTimelineObject(parent string, child string) error {
 
 }
 
+func removeFolder(parent string, child string) error {
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	_, err := session.Run(ctx,
+		"MATCH (p:Directory {name: $parent})-[:CONTAINS]->(c:Directory {name: $child}) DETACH DELETE c RETURN p",
+		map[string]interface{}{
+			"parent": parent,
+			"child":  child,
+		},
+	)
+
+	return err
+}
+
+func matchCreateFolder(parent string, child string) error {
+
+	fmt.Println("making ", parent, "/", child)
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	_, err := session.Run(ctx,
+		"MATCH (p:Directory {name: $parent})"+
+			"MERGE (p)-[:CONTAINS]->(c:Directory {name:$child})"+
+			"RETURN c",
+		map[string]interface{}{
+			"parent": parent,
+			"child":  child,
+		},
+	)
+
+	return err
+}
+
 func matchCreateTimeline(parent string, child string) error {
 
 	fmt.Println("making ", parent, "/", child)
@@ -332,89 +362,4 @@ func matchCreateTimelineFolder(parent string, child string) error {
 	)
 
 	return err
-}
-
-// create directory node and link to parent directory node
-func matchCreateDirNode(parent string, child string) {
-	result, err := neo4j.ExecuteQuery(ctx, driver,
-		"MATCH (p:Directory {name: $parent}) "+
-			"MERGE (p)-[:CONTAINS]->(d:Directory {name: $child}) "+
-			"RETURN d",
-		map[string]any{
-			"parent": parent,
-			"child":  child,
-		}, neo4j.EagerResultTransformer,
-		neo4j.ExecuteQueryWithDatabase("neo4j"))
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Created %v nodes in %+v.\n", len(result.Records),
-		result.Summary.ResultAvailableAfter())
-
-}
-
-// create file node and link to associated directory node
-func matchCreateFileNode(prev string, name string, media []string, s3Key string) {
-
-	fmt.Println("Creating file node for", name)
-
-	result, err := neo4j.ExecuteQuery(ctx, driver,
-		"MATCH (d:Directory {name: $prev}) "+
-			"MERGE (d)-[:CONTAINS]->(f:File {name: $name, s3key: $key}) "+
-			"RETURN f",
-		map[string]any{
-			"prev": prev,
-			"name": name,
-			"key":  s3Key,
-		}, neo4j.EagerResultTransformer,
-		neo4j.ExecuteQueryWithDatabase("neo4j"))
-	if err != nil {
-		panic(err)
-	}
-
-	// media nodes should be added and linked here!
-	if len(media) > 0 {
-		for _, fm := range media {
-			path, _ := splitPathAndFilename(s3Key)
-
-			mediaName := fm
-			index := strings.LastIndex(fm, "/")
-			if index != -1 {
-				mediaName = fm[index+1:]
-			}
-			fullPath := path + "\\media\\" + mediaName
-			matchCreateMediaNode(name, mediaName, fullPath)
-		}
-	}
-
-	fmt.Printf("Created %v nodes in %+v.\n", len(result.Records),
-		result.Summary.ResultAvailableAfter())
-
-}
-
-// create media nodes and link to associated file node
-func matchCreateMediaNode(parentName string, media string, s3key string) {
-
-	// TODO upload to s3, and use key as neo4j property
-
-	fmt.Println("Creating media node for", parentName)
-
-	result, err := neo4j.ExecuteQuery(ctx, driver,
-		"MATCH (f:File {name: $name}) "+
-			"MERGE (f)-[:LINKED]->(i:Media {name: $media, s3key: $s3key}) "+
-			"RETURN i",
-		map[string]any{
-			"name":  parentName,
-			"media": media,
-			"s3key": s3key,
-		}, neo4j.EagerResultTransformer,
-		neo4j.ExecuteQueryWithDatabase("neo4j"))
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Created %v nodes in %+v.\n", len(result.Records),
-		result.Summary.ResultAvailableAfter())
-
 }
