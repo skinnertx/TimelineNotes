@@ -97,8 +97,6 @@ func clearBucket() error {
 	return nil
 }
 
-
-
 func listObjectsinS3() {
 	// Specify your bucket name
 	bucketName := "timeline-notes-bucket"

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j/dbtype"
@@ -141,6 +142,81 @@ func getS3KeyForImage(parent string, name string) (string, error) {
 
 	return "", fmt.Errorf("Media not found: %s", name)
 
+}
+
+func isFolderRoot(parent string) bool {
+	return parent == "root"
+}
+
+func generateS3Key(parent string, fileName string) (string, error) {
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	// initially path only contains parent
+	var path []string
+	path = append(path, parent)
+
+	// loop and add to path until we reach the root
+	folderName := parent
+	atRoot := isFolderRoot(folderName)
+	for !atRoot {
+
+		// query for parent of folderName
+		result, err := session.Run(ctx,
+			"MATCH (d:Directory)-[:CONTAINS]->(c:Directory {name: $child}) RETURN d",
+			map[string]interface{}{
+				"child": folderName,
+			},
+		)
+
+		if err != nil {
+			fmt.Println("Error executing Neo4j query:", err)
+			return "", err
+		}
+
+		if result.Next(ctx) {
+			record := result.Record()
+			folderNode, exists := record.Get("d")
+			if !exists {
+				return "", fmt.Errorf("parent not found: %s", folderName)
+			}
+
+			dbFileNode, ok := folderNode.(dbtype.Node)
+			if !ok {
+				return "", fmt.Errorf("Unexpected type for folderNode")
+			}
+
+			dbFolderName, exists := dbFileNode.Props["name"]
+			if !exists {
+				return "", fmt.Errorf("Name for folder borken: %s", folderName)
+			}
+
+			folderName = dbFolderName.(string)
+		}
+
+		// add to path and update condition
+		path = append(path, folderName)
+		atRoot = isFolderRoot(folderName)
+	}
+
+	// remove root from path
+	path = path[:len(path)-1]
+
+	fmt.Println("path: ", path)
+
+	var s3Key strings.Builder
+
+	for i := len(path) - 1; i >= 0; i-- {
+		s3Key.WriteString(path[i])
+		s3Key.WriteString("/")
+	}
+
+	s3Key.WriteString(fileName)
+
+	finalKey := s3Key.String()
+
+	return finalKey, nil
 }
 
 func getMarkdowns3Key(parent string, fileName string) (string, error) {
@@ -319,6 +395,26 @@ func matchCreateFolder(parent string, child string) error {
 		map[string]interface{}{
 			"parent": parent,
 			"child":  child,
+		},
+	)
+
+	return err
+}
+
+func matchCreateFile(parent string, child string, s3key string) error {
+	fmt.Println("making ", parent, "/", child)
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	_, err := session.Run(ctx,
+		"MATCH (p:Directory {name: $parent})"+
+			"MERGE (p)-[:CONTAINS]->(c:File {name:$child, s3key:$s3key})"+
+			"RETURN c",
+		map[string]interface{}{
+			"parent": parent,
+			"child":  child,
+			"s3key":  s3key,
 		},
 	)
 

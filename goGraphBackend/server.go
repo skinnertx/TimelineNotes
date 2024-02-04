@@ -82,13 +82,14 @@ func main() {
 	r.HandleFunc("/api/hierarchy/{dirName}", serveHierarchy)
 	r.HandleFunc("/api/timelineHierarchy", serveTimelineHierarchy)
 
-	r.HandleFunc("/api/upload/markdown/{parentFolder}", uploadMarkdownFile)
+	r.HandleFunc("/api/save/markdown/{parentFolder}", saveMarkdownFile)
 
 	r.HandleFunc("/api/serve/getImage/{parentFile}/{imageName}", serveImageFile)
 	r.HandleFunc("/api/serve/getMarkdown/{parentFolder}/{fileName}", serveMarkdownFile)
 
 	r.HandleFunc("/api/create/TimelineFolder/{parentFolder}/{childFolder}", createTLObject)
 	r.HandleFunc("/api/create/Folder/{parentFolder}/{childFolder}", createFolderObject)
+	r.HandleFunc("/api/create/MarkdownFile/{parentFolder}", createMarkdownFile)
 
 	r.HandleFunc("/api/delete/TimelineFolder/{parentFolder}/{childFolder}", deleteTLObject)
 	r.HandleFunc("/api/delete/Folder/{parentFolder}/{childFolder}", deleteFolderObject)

@@ -41,9 +41,50 @@ func getHierarchy(parent *Neo4jNode, isTimeline bool) error {
 	return nil
 }
 
+func createMarkdownFile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	parent := vars["parentFolder"]
+
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		fmt.Println("Error parsing multipart form:", err)
+		return
+	}
+
+	file, fileHeader, err := r.FormFile("file")
+	if err != nil {
+		fmt.Println("Error retrieving file from form:", err)
+		return
+	}
+	defer file.Close()
+
+	fileName := fileHeader.Filename
+	fmt.Println("creating ", fileName, " in ", parent)
+
+	s3key, err := generateS3Key(parent, fileName)
+	if err != nil {
+		fmt.Println("Error generating s3Key", err)
+	}
+
+	err = uploadMarkdownToS3(file, s3key)
+	if err != nil {
+		fmt.Println("Error uploading file to S3:", err)
+		return
+	}
+
+	err = matchCreateFile(parent, fileName, s3key)
+	if err != nil {
+		fmt.Println("Error uploading file to neo4j:", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Printf("File %s uploaded successfully!\n", fileName)
+}
+
 // function used to upload a makrdown folder on save press
 // TODO: should this be renamed to something like saveMarkdown?
-func uploadMarkdownFile(w http.ResponseWriter, r *http.Request) {
+func saveMarkdownFile(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	parent := vars["parentFolder"]

@@ -90,7 +90,7 @@ export default function MicromarkFile() {
             const formData = new FormData();
             formData.append('file', blob, file);
 
-            const uploadURL = config.backendBaseUrl + `upload/markdown/${parent}`
+            const uploadURL = config.backendBaseUrl + `save/markdown/${parent}`
             const response = await fetch(uploadURL, {
                 method: 'POST',
                 body: formData,

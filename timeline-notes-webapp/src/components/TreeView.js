@@ -8,6 +8,7 @@ import purpFolderAdd from '../assets/purpFolderAdd.png'
 import purpFileAdd from '../assets/purpFileAdd.png'
 import { useNavigate } from 'react-router-dom';
 import trashCan from '../assets/trash.png'
+import config from '../config';
 
 
 /* 
@@ -116,11 +117,69 @@ export default function TreeView({originalData}) {
     //               THAT ***DO*** MODIFY STATE
     // ==============================================================
 
-    // handle add md file
-    const handleAddFile = () => {
+    const handleAddMarkdownFile = async () => {
 
-    }
+      // get file name
+      let newFileName = prompt("Enter file name:");
+      let fileWithEnd;
+      if (newFileName) {
+        if (!newFileName.includes(".md")) {
+          fileWithEnd = newFileName + ".md"
+        }
+      } else {
+        return
+      }
 
+      // try to upload to db and s3
+      try {
+
+          const title = newFileName + "\n==================="
+          const blob = new Blob([title], { type: 'text/plain' });
+
+          const formData = new FormData();
+          formData.append('file', blob, fileWithEnd);
+
+          const uploadURL = config.backendBaseUrl + `create/MarkdownFile/${viewedNode.name}`
+          const response = await fetch(uploadURL, {
+              method: 'POST',
+              body: formData,
+          });
+
+          if (!response.ok) {
+              throw new Error(`Failed to save Markdown file (status ${response.status})`);
+          }
+
+          console.log('Markdown file saved successfully!');
+      } catch (error) {
+          console.error('Error saving Markdown file:', error.message);
+          return
+      }
+
+      const newFile = {
+        name: fileWithEnd,
+        children: []
+    };
+
+      // Update the state to include the new file as a child of the viewedNode
+      setviewedNode(prevState => {
+        let newChildren = []
+        if (prevState && prevState.children) {
+          newChildren = [...prevState.children, newFile]
+        } else {
+          newChildren = [newFile]
+        }
+
+        const updatedNode = {
+          name: viewedNode.name,
+          children: [...newChildren]
+        }
+
+        // Update the data prop with the new child folder as well
+        const updatedData = updateData(data, currentPath, updatedNode);
+        setData(updatedData)
+        return updatedNode;
+    });
+  };
 
     // handle add folder
     const handleAddFolder = () => {
@@ -174,18 +233,27 @@ export default function TreeView({originalData}) {
           return
         }
         if (objectToRemove) {
-  
-          // update neo4j, if it fails, return
-          const removeFolderURL = `http://localhost:8080/api/delete/Folder/${viewedNode.name}/${objectNameToRemove}`
-          fetch(removeFolderURL, {
-            method: 'POST'
-          }).then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-          }).catch(error => {
-            console.error('Removal Error: , error')
-          })
+          if (objectNameToRemove.includes(".md")) {
+
+            // TODO add file deletion!
+            console.log("file deletion WIP")
+            return
+
+          } else {
+
+            // update neo4j, if it fails, return
+            const removeFolderURL = `http://localhost:8080/api/delete/Folder/${viewedNode.name}/${objectNameToRemove}`
+            fetch(removeFolderURL, {
+              method: 'POST'
+            }).then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+            }).catch(error => {
+              console.error('Removal Error: , error')
+            })
+
+          }
   
           // Remove the object from the data structure
           const updatedData = removeData(data, currentPath, objectNameToRemove);
@@ -339,7 +407,7 @@ export default function TreeView({originalData}) {
             <button onClick={handleAddFolder}>
                 <img src={purpFolderAdd} alt='add folder' />
             </button>
-            <button onClick={handleAddFile}> 
+            <button onClick={handleAddMarkdownFile}> 
               <img src={purpFileAdd} alt='add file' />
             </button>
             {data.name}/{currentPath.join('/')}
