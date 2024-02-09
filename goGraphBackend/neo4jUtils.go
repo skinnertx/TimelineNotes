@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"mime/multipart"
 	"os"
 	"regexp"
 	"strings"
@@ -98,6 +100,141 @@ func getContainedNodes(dirName string, isTimeline bool) ([]string, error) {
 	}
 
 	return nodes, nil
+}
+
+type Match struct {
+	Text         string
+	TimelineName string
+	StartDate    string
+	EndDate      string
+}
+
+func extractVariables(content string) []Match {
+	var matches []Match
+
+	// Define the regex pattern
+	pattern := regexp.MustCompile(`\[(.*?)\]\((.*?)\)\{(.*?)\}\{(.*?)\}`)
+
+	fmt.Println(content)
+
+	// Find all matches of the regex pattern in the content
+	matchStrings := pattern.FindAllStringSubmatch(content, -1)
+
+	// Extract variables from each match and append to the matches slice
+	for _, match := range matchStrings {
+		if len(match) >= 5 {
+			m := Match{
+				Text:         match[1],
+				TimelineName: match[2],
+				StartDate:    match[3],
+				EndDate:      match[4],
+			}
+			matches = append(matches, m)
+		}
+	}
+
+	return matches
+}
+
+func updateTimelines(parent string, fileName string, file multipart.File) error {
+
+	// Read the content of the file
+	_, _ = file.Seek(0, io.SeekStart)
+	content, _ := io.ReadAll(file)
+	matches := extractVariables(string(content))
+
+	for _, match := range matches {
+		fmt.Println("found match for ", match.TimelineName)
+		err := updateTimeline(parent, fileName, match.TimelineName, match.StartDate, match.EndDate)
+		if err != nil {
+			fmt.Println("got error", err)
+			return err
+		}
+	}
+
+	// TODO check all matches against the neo4j graph and update if a timeline was deleted
+
+	return nil
+}
+
+func updateTimeline(parent string, fileName string, timelineName string, startDate string, endDate string) error {
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	_, err := session.Run(ctx,
+		`MATCH (d:Directory {name: $parent})-[:CONTAINS]->(f:File {name: $fileName})
+		MATCH (t:Timeline {name: $timelineName})
+		MERGE (t)-[r:LINKED]->(f)
+		ON CREATE SET r.startDate = $startDate, r.endDate = $endDate
+		`,
+		map[string]interface{}{
+			"parent":       parent,
+			"fileName":     fileName,
+			"timelineName": timelineName,
+			"startDate":    startDate,
+			"endDate":      endDate,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("created link successfully")
+
+	return nil
+}
+
+type TimelineWithRelationships struct {
+	TimelineName  string                   `json:"timelineName"`
+	Relationships []map[string]interface{} `json:"relationships"`
+}
+
+func getTimelineContents(timelineName string) (*TimelineWithRelationships, error) {
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	// TODO, return some way of identifying the md file linked to timeline
+	// probably need file name and parent container
+	result, err := session.Run(ctx,
+		`MATCH (t {name: $child}) 
+		OPTIONAL MATCH (t)-[r:LINKED]->(otherNode)
+		RETURN t.name AS timelineName, COLLECT(r) AS relationships`,
+		map[string]interface{}{
+			"child": timelineName,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Process the query result
+	var timeline TimelineWithRelationships
+	for result.Next(ctx) {
+		record := result.Record()
+
+		tlName, exists := record.Get("timelineName")
+		if !exists {
+			return nil, fmt.Errorf("no timeline name")
+		}
+		timeline.TimelineName = tlName.(string)
+
+		// TODO this is broken!!!
+		relationships, exists := record.Get("relationships")
+		fmt.Println(relationships)
+
+		if exists {
+			relationshipsArray := relationships.([]interface{})
+			for _, rel := range relationshipsArray {
+				timeline.Relationships = append(timeline.Relationships, rel.(map[string]interface{}))
+			}
+		}
+
+	}
+
+	return &timeline, nil
+
 }
 
 func getS3KeyForImage(parent string, name string) (string, error) {

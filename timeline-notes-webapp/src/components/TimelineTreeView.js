@@ -97,15 +97,9 @@ export default function TimelineTreeView({originalData}) {
       setviewedNode(data);
     }
 
-    const handleTimelineClick = (nodeName) => {
-
-      alert("clicked " + nodeName)
-      return
-  
+    const handleTimelineClick = (nodeName) => {  
       //TODO create timeline viewing page
-  
-      let constructedPath = viewedNode.name + '.' + nodeName
-      constructedPath = '/markdown/' + constructedPath
+      let constructedPath = '/timeline/' + nodeName
       navigate(constructedPath)
     }
 

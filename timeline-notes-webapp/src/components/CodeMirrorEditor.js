@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
-import { javascript } from '@codemirror/lang-javascript';
+import { markdown } from '@codemirror/lang-markdown'
+
 
 export default function CodeMirrorEditor({initialValue, handleChange}) {
   // local value used by editor to manage state
-  const [value, setValue] = React.useState(initialValue);
+  const [value, setValue] = useState(initialValue);
 
     // update local value when initialValue changes
   useEffect(() => {
@@ -17,5 +18,15 @@ export default function CodeMirrorEditor({initialValue, handleChange}) {
     handleChange(val)
   }, []);
 
-  return <CodeMirror value={value} height="200px" extensions={[javascript({ jsx: true })]} onChange={onChange} />;
+  return (
+    <div>
+      <CodeMirror 
+        value={value} 
+        height="200px" 
+        extensions={[markdown()]} 
+        onChange={onChange} 
+        linewrapping="true"
+      />
+    </div>
+  )
 }

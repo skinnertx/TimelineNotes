@@ -83,7 +83,6 @@ func createMarkdownFile(w http.ResponseWriter, r *http.Request) {
 }
 
 // function used to upload a makrdown folder on save press
-// TODO: should this be renamed to something like saveMarkdown?
 func saveMarkdownFile(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
@@ -112,6 +111,9 @@ func saveMarkdownFile(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error uploading file to S3:", err)
 		return
 	}
+
+	// update timeline links in neo4j
+	err = updateTimelines(parent, fileName, file)
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Printf("File %s uploaded successfully!\n", fileName)
@@ -291,6 +293,23 @@ func serveImageFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(fileContents)
+}
+
+func serveTimeline(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	timelineName := vars["timelineName"]
+
+	fmt.Println(timelineName)
+
+	timelineContents, err := getTimelineContents(timelineName)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	jsonData, err := json.Marshal(timelineContents)
+	w.Write(jsonData)
 }
 
 // serve a markdown file

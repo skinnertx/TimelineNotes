@@ -83,6 +83,7 @@ export default function MicromarkFile() {
     };
 
     const handleSaveMarkdown = async () => {
+
         try {
 
             const blob = new Blob([markdownString], { type: 'text/plain' });
@@ -103,7 +104,11 @@ export default function MicromarkFile() {
             console.log('Markdown file saved successfully!');
         } catch (error) {
             console.error('Error saving Markdown file:', error.message);
+            return
         }
+
+        // then upload timeline stuff
+
     };
 
     return (

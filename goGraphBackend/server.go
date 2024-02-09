@@ -86,6 +86,7 @@ func main() {
 
 	r.HandleFunc("/api/serve/getImage/{parentFile}/{imageName}", serveImageFile)
 	r.HandleFunc("/api/serve/getMarkdown/{parentFolder}/{fileName}", serveMarkdownFile)
+	r.HandleFunc("/api/serve/getTimeline/{timelineName}", serveTimeline)
 
 	r.HandleFunc("/api/create/TimelineFolder/{parentFolder}/{childFolder}", createTLObject)
 	r.HandleFunc("/api/create/Folder/{parentFolder}/{childFolder}", createFolderObject)

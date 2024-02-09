@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import Hierarchy from './routes/hierarchy';
 import MicromarkFile from './routes/markdownFile';
 import TimelineHierarchy from './routes/timelineHierarchy';
+import TimelineViewer from './routes/timeline';
 
 function App() {
   return (
@@ -22,6 +23,11 @@ function App() {
         <Route 
           path="/markdown/:parent/:file" 
           element={<MicromarkFile />} 
+          errorElement={<ErrorPage/>}
+        />
+        <Route 
+          path="/timeline/:timeline" 
+          element={<TimelineViewer />} 
           errorElement={<ErrorPage/>}
         />
         <Route
