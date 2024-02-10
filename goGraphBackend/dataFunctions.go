@@ -114,6 +114,7 @@ func saveMarkdownFile(w http.ResponseWriter, r *http.Request) {
 
 	// update timeline links in neo4j
 	err = updateTimelines(parent, fileName, file)
+	// TODO find way to tell front end that link is broken
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Printf("File %s uploaded successfully!\n", fileName)

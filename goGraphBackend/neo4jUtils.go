@@ -122,6 +122,7 @@ func extractVariables(content string) []Match {
 
 	// Extract variables from each match and append to the matches slice
 	for _, match := range matchStrings {
+		fmt.Println("match", match)
 		if len(match) >= 5 {
 			m := Match{
 				Text:         match[1],
@@ -167,6 +168,7 @@ func updateTimeline(parent string, fileName string, timelineName string, startDa
 		MATCH (t:Timeline {name: $timelineName})
 		MERGE (t)-[r:LINKED]->(f)
 		ON CREATE SET r.startDate = $startDate, r.endDate = $endDate
+		ON MATCH SET r.startDate = $startDate, r.endDate = $endDate
 		`,
 		map[string]interface{}{
 			"parent":       parent,
@@ -185,9 +187,16 @@ func updateTimeline(parent string, fileName string, timelineName string, startDa
 	return nil
 }
 
+type RelationshipLink struct {
+	ParentFolder string `json:"parentFolder"`
+	FileName     string `json:"fileName"`
+	StartDate    string `json:"startDate"`
+	EndDate      string `json:"endDate"`
+}
+
 type TimelineWithRelationships struct {
-	TimelineName  string                   `json:"timelineName"`
-	Relationships []map[string]interface{} `json:"relationships"`
+	TimelineName  string             `json:"timelineName"`
+	Relationships []RelationshipLink `json:"relationships"`
 }
 
 func getTimelineContents(timelineName string) (*TimelineWithRelationships, error) {
@@ -195,12 +204,11 @@ func getTimelineContents(timelineName string) (*TimelineWithRelationships, error
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	// TODO, return some way of identifying the md file linked to timeline
-	// probably need file name and parent container
+	// get the matching timeline and links
 	result, err := session.Run(ctx,
 		`MATCH (t {name: $child}) 
-		OPTIONAL MATCH (t)-[r:LINKED]->(otherNode)
-		RETURN t.name AS timelineName, COLLECT(r) AS relationships`,
+		OPTIONAL MATCH (t)-[r:LINKED]->(f)<-[:CONTAINS]-(d)
+		RETURN t.name AS timelineName, f.name AS fileName, d.name AS parentName, COLLECT(r) AS relationships`,
 		map[string]interface{}{
 			"child": timelineName,
 		},
@@ -214,23 +222,54 @@ func getTimelineContents(timelineName string) (*TimelineWithRelationships, error
 	for result.Next(ctx) {
 		record := result.Record()
 
+		// name of timeline
 		tlName, exists := record.Get("timelineName")
 		if !exists {
 			return nil, fmt.Errorf("no timeline name")
 		}
 		timeline.TimelineName = tlName.(string)
 
-		// TODO this is broken!!!
-		relationships, exists := record.Get("relationships")
-		fmt.Println(relationships)
-
-		if exists {
-			relationshipsArray := relationships.([]interface{})
-			for _, rel := range relationshipsArray {
-				timeline.Relationships = append(timeline.Relationships, rel.(map[string]interface{}))
-			}
+		// name of linked file
+		fileName, exists := record.Get("fileName")
+		if !exists {
+			return nil, fmt.Errorf("no file name")
 		}
 
+		// name of parent folder
+		parentName, exists := record.Get("parentName")
+		if !exists {
+			return nil, fmt.Errorf("no parent folder")
+		}
+
+		// linked relationships
+		relationshipsInterface, exists := record.Get("relationships")
+		if !exists {
+			return nil, fmt.Errorf("no relationships found")
+		}
+
+		// Type assertion to convert to []interface{}
+		relationships, ok := relationshipsInterface.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationships")
+		}
+
+		// loop thru relationships and fill out structs
+		for _, rel := range relationships {
+			dbRel := rel.(dbtype.Relationship)
+			fmt.Println(dbRel)
+			linkMap := dbRel.Props
+			if linkMap == nil {
+				return nil, fmt.Errorf("link map missing dates")
+			}
+
+			var relStruct RelationshipLink
+			relStruct.StartDate = linkMap["startDate"].(string)
+			relStruct.EndDate = linkMap["endDate"].(string)
+			relStruct.FileName = fileName.(string)
+			relStruct.ParentFolder = parentName.(string)
+			timeline.Relationships = append(timeline.Relationships, relStruct)
+
+		}
 	}
 
 	return &timeline, nil
