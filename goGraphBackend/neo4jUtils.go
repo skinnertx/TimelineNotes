@@ -102,6 +102,17 @@ func getContainedNodes(dirName string, isTimeline bool) ([]string, error) {
 	return nodes, nil
 }
 
+func isValidDate(dateStr string) bool {
+
+	pattern := `^(-?\d+)(-\d{2}){2}$`
+	regex := regexp.MustCompile(pattern)
+
+	// TODO, check if day and month are in valid ranges?
+
+	// Check if the date string matches the pattern
+	return regex.MatchString(dateStr)
+}
+
 type Match struct {
 	Text         string
 	TimelineName string
@@ -109,7 +120,7 @@ type Match struct {
 	EndDate      string
 }
 
-func extractVariables(content string) []Match {
+func extractVariables(content string) ([]Match, error) {
 	var matches []Match
 
 	// Define the regex pattern
@@ -121,6 +132,9 @@ func extractVariables(content string) []Match {
 	// Extract variables from each match and append to the matches slice
 	for _, match := range matchStrings {
 		if len(match) >= 5 {
+			if !isValidDate(match[3]) || !isValidDate(match[4]) {
+				return nil, fmt.Errorf("invalid date string")
+			}
 			m := Match{
 				Text:         match[1],
 				TimelineName: match[2],
@@ -131,7 +145,7 @@ func extractVariables(content string) []Match {
 		}
 	}
 
-	return matches
+	return matches, nil
 }
 
 func updateTimelines(parent string, fileName string, file multipart.File) error {
@@ -139,7 +153,10 @@ func updateTimelines(parent string, fileName string, file multipart.File) error 
 	// Read the content of the file
 	_, _ = file.Seek(0, io.SeekStart)
 	content, _ := io.ReadAll(file)
-	matches := extractVariables(string(content))
+	matches, err := extractVariables(string(content))
+	if err != nil {
+		return err
+	}
 
 	for _, match := range matches {
 		fmt.Println("found match for ", match.TimelineName)
