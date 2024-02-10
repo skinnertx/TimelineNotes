@@ -143,6 +143,7 @@ func updateTimelines(parent string, fileName string, file multipart.File) error 
 
 	for _, match := range matches {
 		fmt.Println("found match for ", match.TimelineName)
+		fmt.Println(match)
 		err := updateTimeline(parent, fileName, match.TimelineName, match.StartDate, match.EndDate)
 		if err != nil {
 			fmt.Println("got error", err)

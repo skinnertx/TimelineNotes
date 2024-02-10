@@ -60,6 +60,7 @@ export default function MicromarkFile() {
         return modifiedMarkdown;
     };
 
+
     // on mount and whenever the Markdown string changes, convert it to HTML
     useEffect(() => {
 
@@ -70,8 +71,17 @@ export default function MicromarkFile() {
             htmlExtensions: [gfmFootnoteHtml()]
         });
 
+        const regexPattern = /\[(.*?)\]\((.*?)\)\{(.*?)\}\{(.*?)\}/g;
+        // Replace matches using a custom function
+        const linkedTimelines = output.replace(regexPattern, (match, linkText, url, startDate, endDate) => {
+            // Construct the HTML anchor tag with the extracted values
+            const timelineURL = config.frontendBaseURL + "timeline/" + url
+            const htmlAnchorTag = `<a href="${timelineURL}">${linkText}</a>`;
+            return htmlAnchorTag;
+        });
+
         // make internal links open new tabs when clicked
-        const modifiedHtmlContent = output.replace(/<a\s+(?:[^>]*)>/gi, '<a target="_blank" $&');
+        const modifiedHtmlContent = linkedTimelines.replace(/<a\s+(?:[^>]*)>/gi, '<a target="_blank" $&');
 
         setOutputHtml(modifiedHtmlContent);
     }, [markdownString]);
