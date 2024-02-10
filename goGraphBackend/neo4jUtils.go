@@ -115,14 +115,11 @@ func extractVariables(content string) []Match {
 	// Define the regex pattern
 	pattern := regexp.MustCompile(`\[(.*?)\]\((.*?)\)\{(.*?)\}\{(.*?)\}`)
 
-	fmt.Println(content)
-
 	// Find all matches of the regex pattern in the content
 	matchStrings := pattern.FindAllStringSubmatch(content, -1)
 
 	// Extract variables from each match and append to the matches slice
 	for _, match := range matchStrings {
-		fmt.Println("match", match)
 		if len(match) >= 5 {
 			m := Match{
 				Text:         match[1],
@@ -163,12 +160,17 @@ func updateTimeline(parent string, fileName string, timelineName string, startDa
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	_, err := session.Run(ctx,
+	timelineFound := false
+
+	result, err := session.Run(ctx,
 		`MATCH (d:Directory {name: $parent})-[:CONTAINS]->(f:File {name: $fileName})
 		MATCH (t:Timeline {name: $timelineName})
+		WITH d, f, t
+		WHERE t IS NOT NULL
 		MERGE (t)-[r:LINKED]->(f)
 		ON CREATE SET r.startDate = $startDate, r.endDate = $endDate
 		ON MATCH SET r.startDate = $startDate, r.endDate = $endDate
+		RETURN t IS NOT NULL AS timelineFound
 		`,
 		map[string]interface{}{
 			"parent":       parent,
@@ -180,6 +182,20 @@ func updateTimeline(parent string, fileName string, timelineName string, startDa
 	)
 	if err != nil {
 		return err
+	}
+
+	for result.Next(ctx) {
+		record := result.Record()
+		// Retrieve the value of timelineFound
+		timelineFoundValue, ok := record.Get("timelineFound")
+		if ok {
+			timelineFound = timelineFoundValue.(bool)
+		}
+	}
+
+	if !timelineFound {
+		// Handle the case where a Timeline node was not found
+		return fmt.Errorf("failed to find %s", timelineName)
 	}
 
 	fmt.Println("created link successfully")

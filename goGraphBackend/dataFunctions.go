@@ -114,7 +114,21 @@ func saveMarkdownFile(w http.ResponseWriter, r *http.Request) {
 
 	// update timeline links in neo4j
 	err = updateTimelines(parent, fileName, file)
-	// TODO find way to tell front end that link is broken
+	if err != nil {
+		// Handle the error
+		fmt.Println("got error updating timelines")
+		errorMessage := "Failed to update timelines: " + err.Error()
+
+		// Encode the error message into JSON
+		errorResponse := map[string]string{"error": errorMessage}
+		jsonResponse, _ := json.Marshal(errorResponse)
+
+		// Send the JSON response with the error message
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(jsonResponse)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Printf("File %s uploaded successfully!\n", fileName)
@@ -165,7 +179,6 @@ func serveHierarchy(w http.ResponseWriter, r *http.Request) {
 }
 
 // create a folder object with the given names
-// TODO add file compatibility
 func createFolderObject(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
@@ -176,7 +189,6 @@ func createFolderObject(w http.ResponseWriter, r *http.Request) {
 
 	if strings.Contains(child, ".md") {
 
-		// TODO add logic to upload a new file to s3
 		// and add to neo4j
 		fmt.Println("WIP adding a file")
 

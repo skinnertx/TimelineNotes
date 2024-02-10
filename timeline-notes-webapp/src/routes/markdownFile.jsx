@@ -84,6 +84,8 @@ export default function MicromarkFile() {
 
     const handleSaveMarkdown = async () => {
 
+        let response;
+
         try {
 
             const blob = new Blob([markdownString], { type: 'text/plain' });
@@ -92,7 +94,7 @@ export default function MicromarkFile() {
             formData.append('file', blob, file);
 
             const uploadURL = config.backendBaseUrl + `save/markdown/${parent}`
-            const response = await fetch(uploadURL, {
+            response = await fetch(uploadURL, {
                 method: 'POST',
                 body: formData,
             });
@@ -104,10 +106,22 @@ export default function MicromarkFile() {
             console.log('Markdown file saved successfully!');
         } catch (error) {
             console.error('Error saving Markdown file:', error.message);
-            return
         }
 
-        // then upload timeline stuff
+        if (response) {
+            try {
+                const responseData = await response.json();
+                if (responseData && responseData.error) {
+                    console.error('Error from backend:', responseData.error);
+                    alert(`Error: ${responseData.error}`);
+                }
+            } catch (jsonError) {
+                console.error('Error parsing JSON:', jsonError.message);
+                // Handle parsing error gracefully
+            }
+        }
+    
+        
 
     };
 

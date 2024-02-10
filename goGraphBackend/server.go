@@ -18,15 +18,6 @@ var driver neo4j.DriverWithContext
 var ctx context.Context
 var svc *s3.S3
 
-/*
-	todo
-		handle returning data at enpoints
-		- endpoint for timeline
-		- endpoint for individual notes
-		- endpoints for list of timelines
-		- endpoints for list of notes (queryable by connect notes)
-*/
-
 func main() {
 
 	// set up neo4j driver
