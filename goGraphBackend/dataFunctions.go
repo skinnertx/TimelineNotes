@@ -313,11 +313,39 @@ func serveTimeline(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	timelineName := vars["timelineName"]
 
-	fmt.Println(timelineName)
+	fmt.Println("serving: ", timelineName)
 
 	timelineContents, err := getTimelineContents(timelineName)
+	if timelineContents.TimelineName == "" {
+		// Handle the error
+		fmt.Printf("time line of name %s was not found\n", timelineName)
+		err = fmt.Errorf("could not find timeline %s", timelineName)
+		errorMessage := err.Error()
+
+		// Encode the error message into JSON
+		errorResponse := map[string]string{"error": errorMessage}
+		jsonResponse, _ := json.Marshal(errorResponse)
+
+		// Send the JSON response with the error message
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(jsonResponse)
+		return
+	}
+
 	if err != nil {
-		fmt.Println("Error: ", err)
+		// Handle the error
+		fmt.Println("got error searching for timeline")
+		errorMessage := err.Error()
+
+		// Encode the error message into JSON
+		errorResponse := map[string]string{"error": errorMessage}
+		jsonResponse, _ := json.Marshal(errorResponse)
+
+		// Send the JSON response with the error message
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(jsonResponse)
 		return
 	}
 

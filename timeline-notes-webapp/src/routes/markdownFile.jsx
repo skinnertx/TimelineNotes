@@ -71,7 +71,7 @@ export default function MicromarkFile() {
             htmlExtensions: [gfmFootnoteHtml()]
         });
 
-        const regexPattern = /\[(.*?)\]\((.*?)\)\{(.*?)\}\{(.*?)\}/g;
+        const regexPattern = /\((.*?)\)\[(.*?)\]\{(.*?)\}\{(.*?)\}/g;
         // Replace matches using a custom function
         const linkedTimelines = output.replace(regexPattern, (match, linkText, url, startDate, endDate) => {
             // Construct the HTML anchor tag with the extracted values

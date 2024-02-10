@@ -8,6 +8,7 @@ import Hierarchy from './routes/hierarchy';
 import MicromarkFile from './routes/markdownFile';
 import TimelineHierarchy from './routes/timelineHierarchy';
 import TimelineViewer from './routes/timeline';
+import GenericErrorPage from './errors/genericError';
 
 function App() {
   return (
@@ -39,6 +40,10 @@ function App() {
           path="/timeline-hierarchy"
           element={<TimelineHierarchy />}
           errorElement={<ErrorPage/>}
+        />
+        <Route
+          path='/error'
+          element={<GenericErrorPage/>}
         />
       </Routes>
     </div>

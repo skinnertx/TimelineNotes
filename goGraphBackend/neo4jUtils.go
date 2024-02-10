@@ -113,7 +113,7 @@ func extractVariables(content string) []Match {
 	var matches []Match
 
 	// Define the regex pattern
-	pattern := regexp.MustCompile(`\[(.*?)\]\((.*?)\)\{(.*?)\}\{(.*?)\}`)
+	pattern := regexp.MustCompile(`\((.*?)\)\[(.*?)\]\{(.*?)\}\{(.*?)\}`)
 
 	// Find all matches of the regex pattern in the content
 	matchStrings := pattern.FindAllStringSubmatch(content, -1)
