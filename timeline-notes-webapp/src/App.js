@@ -7,7 +7,7 @@ import Navbar from './components/Navbar';
 import Hierarchy from './routes/hierarchy';
 import MicromarkFile from './routes/markdownFile';
 import TimelineHierarchy from './routes/timelineHierarchy';
-import TimelineViewer from './routes/timeline';
+import TimelineViewer from './routes/timelineViewer';
 import GenericErrorPage from './errors/genericError';
 
 function App() {

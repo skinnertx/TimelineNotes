@@ -2,6 +2,7 @@ import config from "../config";
 import { useParams } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Timeline from "../components/Timeline";
 
 export default function TimelineViewer() {
 
@@ -24,7 +25,7 @@ export default function TimelineViewer() {
                     }
     
                     const timelineJson = await response.json();
-                    setTimelineData(JSON.stringify(timelineJson, null, 2))
+                    setTimelineData(timelineJson)
     
                 } catch (error) {
                     console.error('Error fetching Timeline file:', error.message);
@@ -37,6 +38,10 @@ export default function TimelineViewer() {
         }, [timeline, navigate]);
 
         return (
-            <pre>{timelineData}</pre>
+            <>
+                <pre>{JSON.stringify(timelineData, null, 2)}</pre>
+                <Timeline data={timelineData}/>
+            </>
+            
         )
 }
