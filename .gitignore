@@ -2,3 +2,4 @@
 /goGraphBackend/Neo4jCreds.txt
 /pkg
 /bin
+testscripts/test.go
