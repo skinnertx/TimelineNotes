@@ -104,7 +104,7 @@ func getContainedNodes(dirName string, isTimeline bool) ([]string, error) {
 
 func isValidDate(dateStr string) bool {
 
-	pattern := `^(-?\d+)(-\d{2}){2}$`
+	pattern := `^(-?\d+)(-\d{2}){2}( \d{2}:\d{2}:\d{2})?$`
 	regex := regexp.MustCompile(pattern)
 
 	// TODO, check if day and month are in valid ranges?
