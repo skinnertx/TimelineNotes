@@ -1,23 +1,58 @@
+.timeline-background {
+    background: linear-gradient(90deg, rgba(159,39,199,1) 16%, rgba(140,84,204,1) 36%, rgba(103,68,220,1) 70%, rgba(21,107,217,1) 88%);
+    height: 75vh;
+    width: calc(100% - 100px);
+    margin: 0 auto;
+    border-radius: 15px;
+}
+
 .timeline-container {
     display: flex;
     flex-direction: row;
-    width: calc(100% - 40px);
     padding: 0 10px;
     margin: 0 auto;
+    padding-top: 10vh;
+    width: calc(100% - 125px);
+}
+
+
+.center-line {
+    background-color: antiquewhite;
+    width: 100%;
+    height: 4px;
+    position: absolute;
+    top: 50%
+}
+
+.endcap {
+    background-color: antiquewhite;
+    height: 100%;
+    width: 5px;
+    position: absolute;
+    right: 0;
+    border-radius: 5px;
+}
+
+.startcap {
+    background-color: antiquewhite;
+    height: 100%;
+    width: 5px;
+    position: absolute;
+    left: 0;
+    border-radius: 5px;
 }
 
 .sub-timeline-container {
     flex: 1;
-    border: 1px solid black;
+
     box-sizing: border-box;
     position: relative;
+    height: 10vh;
 }
 
-
 .first-tick {
-
     position: absolute; 
-    left: 0;
+    left: -5px;
     bottom: 0;
 }
 
@@ -27,13 +62,14 @@
     white-space: nowrap;
     transform-origin: bottom left; 
     display: inline;
+    color: antiquewhite;
 }
 
 
 .timeline-tick {
     position:absolute; 
     bottom: 0; 
-    right: 7px;
+    right: 10px;
 }
 
 
@@ -43,4 +79,14 @@
     white-space: nowrap;
     transform-origin: bottom left; 
     display: inline;
+    color: antiquewhite;
+}
+
+.sub-tick {
+    background-color: antiquewhite;
+    height: 50%;
+    width: 3px;
+    position: absolute;
+    top: 27%;
+    border-radius: 5px;
 }

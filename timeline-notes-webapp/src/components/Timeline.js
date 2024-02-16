@@ -173,7 +173,7 @@ export default function Timeline({data}) {
 
   // track previous ranges for zoom out functionality
   const [rangeStack, setRangeStack] = useState([])
-
+  
   // list of all events
   const [eventList, setEventList] = useState([])
 
@@ -184,11 +184,14 @@ export default function Timeline({data}) {
   // timeline range for currently viewed events (earliest date, latest date)
   const [timelineRange, setTimelineRange] = useState([])
 
-  // list of all ticks that can be used to delimit timeline sections
+  // list of all ticks that can be used to delimit timeline sections (list of eventDates)
   const [timelineTicks, setTimelineTicks] = useState([])
 
+  // data to dynamically create
+  // subticks to display between labeled ticks
+  const [marginList, setMarginList] = useState([])
+  const [ticks, setTicks] = useState([]);
 
-  
   // create the list of events from json data
   function createEventList(relationships) {
 
@@ -258,9 +261,18 @@ export default function Timeline({data}) {
         </div>
       )
     }
-
-   
   }
+
+  const calculateSubTickMargins = () => {
+    const parentWidth = document.querySelector('.sub-timeline-container').offsetWidth
+    const numTicks = Math.floor(parentWidth / 30)
+    const offsetUnit = parentWidth / numTicks
+    const margins = new Array(numTicks)
+    for (let i = 1; i < numTicks; i++) {
+      margins[i] = i * offsetUnit
+    }
+    setMarginList(margins)
+  };
 
   // on load calculate base stats of timeline
   // this should run once on page load, when data is recieved
@@ -293,6 +305,25 @@ export default function Timeline({data}) {
     console.log("timeline ticks: ", timelineTicks)
   }, [timelineTicks]) 
 
+
+  useEffect(() => {
+    calculateSubTickMargins()
+
+    window.addEventListener('resize', calculateSubTickMargins)
+
+    return () => {
+      window.removeEventListener('resize', calculateSubTickMargins);
+    };
+  }, [])
+
+  useEffect(() => {
+    // Update the ticks based on the margin list
+    const newTicks = marginList.map((margin, index) => (
+      <div className="sub-tick" key={index} style={{ marginLeft: `${margin}px` }}></div>
+    ));
+    setTicks(newTicks);
+  }, [marginList]);
+
   // TODO after the date ticks are populated, display to screen!
 
   // TODO add buttons to zoom in/out ->
@@ -303,34 +334,45 @@ export default function Timeline({data}) {
 
       when zooming out, pop range from stack and filter events then set events in view as before
     */
-    
+  
   
 
 
   return (
-    <div className="timeline-container">
+    <div className='timeline-background'>
+      <div className="timeline-container">
       
-      <div className="sub-timeline-container">
-        <TimelineTick eventDate={timelineTicks[0]} isFirstTick={true}/>
-        Item 1
-        <TimelineTick eventDate={timelineTicks[1]}/>
+        <div className="sub-timeline-container">
+          <TimelineTick eventDate={timelineTicks[0]} isFirstTick={true}/>
+          <div className="center-line"/>
+          <div className="startcap"/>
+          {ticks}
+          <div className="endcap"/>
+          <TimelineTick eventDate={timelineTicks[1]}/>
+        </div>
+        
+        <div className="sub-timeline-container">
+          <div className="center-line"/>
+          {ticks}
+          <div className="endcap"/>
+          <TimelineTick eventDate={timelineTicks[2]}/>
+        </div>
+        
+        <div className="sub-timeline-container">
+          <div className="center-line"/>
+          {ticks}
+          <div className="endcap"/>
+          <TimelineTick eventDate={timelineTicks[3]}/>
+        </div>
+        
+        <div className="sub-timeline-container">
+          <div className="center-line"/>
+          {ticks}
+          <div className="endcap"/>
+          <TimelineTick eventDate={timelineTicks[4]}/>
+        </div>
+      
       </div>
-      
-      <div className="sub-timeline-container">
-        Item 2
-        <TimelineTick eventDate={timelineTicks[2]}/>
-      </div>
-      
-      <div className="sub-timeline-container">
-        Item 3
-        <TimelineTick eventDate={timelineTicks[3]}/>
-      </div>
-      
-      <div className="sub-timeline-container">
-        Item 4
-        <TimelineTick eventDate={timelineTicks[4]}/>
-      </div>
-      
     </div>
   );
 }

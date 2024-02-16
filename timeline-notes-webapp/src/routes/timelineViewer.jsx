@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Timeline from "../components/Timeline";
+import "../styles/TimelineViewer.css"
 
 export default function TimelineViewer() {
 
@@ -39,7 +40,7 @@ export default function TimelineViewer() {
 
         return (
             <>
-                <pre>{JSON.stringify(timelineData, null, 2)}</pre>
+                {timelineData ? <div className="timeline-title">{timelineData.timelineName}</div> : null}
                 <Timeline data={timelineData}/>
             </>
             
