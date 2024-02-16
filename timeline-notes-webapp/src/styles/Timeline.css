@@ -10,4 +10,37 @@
     flex: 1;
     border: 1px solid black;
     box-sizing: border-box;
+    position: relative;
+}
+
+
+.first-tick {
+
+    position: absolute; 
+    left: 0;
+    bottom: 0;
+}
+
+.f-inner-tick {
+    position: absolute;
+    transform: rotate(90deg);
+    white-space: nowrap;
+    transform-origin: bottom left; 
+    display: inline;
+}
+
+
+.timeline-tick {
+    position:absolute; 
+    bottom: 0; 
+    right: 7px;
+}
+
+
+.inner-tick {
+    position: absolute;
+    transform: rotate(90deg);
+    white-space: nowrap;
+    transform-origin: bottom left; 
+    display: inline;
 }
