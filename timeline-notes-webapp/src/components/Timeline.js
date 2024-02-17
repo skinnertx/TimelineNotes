@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/Timeline.css'
 
+// this should probly have been an enum
 const secInYear = 365 * 24 * 60 * 60
 const secInMonth = 30 * 24 * 60 * 60
 const secInDay = 24 * 60 * 60
 const secInHour = 60 * 60
 const secInMinute = 60
+
+const RangeOverlap = {
+  NONE: 0,
+  CONTAINED: 1,
+  LEFT: 2,
+  RIGHT: 3,
+  CONTAINS: 4
+}
 
 // class to store information about an event
 class Event {
@@ -23,6 +32,40 @@ class Event {
 
   isRange() {
     return this.startDate.equals(this.endDate)
+  }
+
+  // return enum of RangeOverlap
+  // usage, this.findOverlapRange(sd, ed)
+  // returns the type of overlap between this event and ranfe specified by otherStart, otherEnd
+  findOverlapRange(otherStart, otherEnd) {
+    if (otherStart instanceof EventDate && otherEnd instanceof EventDate) {
+      const startComparison = this.startDate.compare(otherStart)
+      const endComparison = this.endDate.compare(otherEnd)
+
+      // if exact match
+      if (startComparison === 0 && endComparison === 0) {
+        return RangeOverlap.CONTAINED
+      // if this event contains other
+      } else if (startComparison <= 0 && endComparison >= 0) {
+        return RangeOverlap.CONTAINS
+      // left overlap
+      } else if (startComparison <=0 && endComparison <= 0) {
+        if (this.endDate.compare(otherStart) >= 0) {
+          return RangeOverlap.LEFT
+        }
+      // right overlap
+      } else if (startComparison >= 0 && endComparison >= 0) {
+        if(this.startDate.compare(otherEnd) <= 0) {
+          return RangeOverlap.RIGHT
+        }
+      // this is contained by other
+      } else if (startComparison >= 0 && endComparison <= 0) {
+        return RangeOverlap.CONTAINED
+      }
+
+      // no relation
+      return RangeOverlap.NONE
+    }
   }
 }
 
@@ -91,6 +134,10 @@ class EventDate {
     return false
   }
 
+  // usage this.compare(other)
+  // if this preceeds other, return -1
+  // if they are the same, return 0
+  // if this is post other, return 1
   compare(other) {
     if (other instanceof EventDate) {
       if (this.year !== other.year) {
@@ -210,14 +257,15 @@ export default function Timeline({data}) {
   }
 
   // get the earliest and latests dates in the list
+  // called on load
   function getTimelineRange() {
-
-    if (eventsInView.length === 0) { return }
+    console.log("called update range")
+    if (eventList.length === 0) { return }
     // special infinity dates
     let earliestStartDate = new EventDate("+")
     let latestEndDate = new EventDate("-")
     // loop thru each event and compare
-    eventsInView.forEach((ev) => {
+    eventList.forEach((ev) => {
       if (ev.startDate.compare(earliestStartDate) < 0) {
         earliestStartDate = ev.startDate
       }
@@ -230,9 +278,9 @@ export default function Timeline({data}) {
     setTimelineRange([earliestStartDate, latestEndDate])
   }
 
+  // set timeline ticks
   function getTimelineTicks() {
-
-    if (timelineRange.length < 2) { return }
+    if (!timelineRange || timelineRange.length < 2) { return }
 
     let sd = timelineRange[0]
     let ed = timelineRange[1]
@@ -243,6 +291,114 @@ export default function Timeline({data}) {
     setTimelineTicks([sd, smd, md, emd, ed])
   }
 
+  // set margins for subtick size
+  const calculateSubTickMargins = () => {
+    const parentWidth = document.querySelector('.sub-timeline-container').offsetWidth
+    const numTicks = Math.floor(parentWidth / 60)
+    const offsetUnit = parentWidth / numTicks
+    const margins = new Array(numTicks)
+    for (let i = 1; i < numTicks; i++) {
+      margins[i] = i * offsetUnit
+    }
+    setMarginList(margins)
+  };
+
+  // filter events by current range
+  function getEventsInView() {
+
+    let filteredEvents = []
+    console.log(eventsInView)
+
+      // filter events based on timeline range
+      eventsInView.forEach((ev) => {
+        const overlapType = ev.findOverlapRange(timelineRange[0], timelineRange[1])
+        if (overlapType !== RangeOverlap.NONE) {
+          filteredEvents.push(ev)
+          console.log(overlapType)
+        }
+      })
+    
+    setEventsInView(filteredEvents)
+  }
+
+  // handle a timeline sub section click
+  // updaate range after pushign former range to stack
+  // filter events
+  function handleSubTimelineClick(section) {
+    console.log(section)
+
+    // push range to stack
+    setRangeStack(prevRangeStack => [...prevRangeStack, timelineRange]);
+
+    // get new range
+    const startDate = timelineTicks[section]
+    const endDate = timelineTicks[(section + 1)]
+    setTimelineRange([startDate, endDate])
+
+    // filter events
+    getEventsInView()    
+  }
+
+
+  // on load calculate base stats of timeline
+  // this should run once on page load, when data is recieved
+  useEffect(() => {
+    if (data && data.relationships) {
+
+      // parse json data into list of events
+      createEventList(data.relationships)
+      setEventsInView(eventList)
+
+      // set the timeline range based on event list
+      getTimelineRange()
+      
+      console.log(eventList)
+    }
+  }, [data])
+
+  // when the range is updated, get the date ticks!
+  // also set events in view based on range
+  useEffect(() => {
+    // TODO get the date ticks
+    console.log("range: ", timelineRange)
+    getTimelineTicks()
+    getEventsInView()
+  }, [timelineRange])
+
+  useEffect(() => {
+    console.log("timeline ticks: ", timelineTicks)
+  }, [timelineTicks]) 
+
+  // used to resize ui on page size change
+  useEffect(() => {
+    calculateSubTickMargins()
+
+    window.addEventListener('resize', calculateSubTickMargins)
+
+    return () => {
+      window.removeEventListener('resize', calculateSubTickMargins);
+    };
+  }, [])
+
+  // also updates ui
+  useEffect(() => {
+    // Update the ticks based on the margin list
+    const newTicks = marginList.map((margin, index) => (
+      <div className="sub-tick" key={index} style={{ marginLeft: `${margin}px` }}></div>
+    ));
+    setTicks(newTicks);
+  }, [marginList]);
+
+  // TODO add buttons to zoom in/out ->
+    /* 
+      button should filter all events based on the date tick range
+      then set events in current view to the filtered list which causes the useEffect chain to trigger
+      range should also be pushed to rangeStack so you can back up and out
+
+      when zooming out, pop range from stack and filter events then set events in view as before
+    */
+
+  // helper dispaly component function
   function TimelineTick({eventDate, isFirstTick = false }) {
 
     if (!eventDate) {return}
@@ -263,114 +419,39 @@ export default function Timeline({data}) {
     }
   }
 
-  const calculateSubTickMargins = () => {
-    const parentWidth = document.querySelector('.sub-timeline-container').offsetWidth
-    const numTicks = Math.floor(parentWidth / 30)
-    const offsetUnit = parentWidth / numTicks
-    const margins = new Array(numTicks)
-    for (let i = 1; i < numTicks; i++) {
-      margins[i] = i * offsetUnit
-    }
-    setMarginList(margins)
-  };
-
-  // on load calculate base stats of timeline
-  // this should run once on page load, when data is recieved
-  useEffect(() => {
-    if (data && data.relationships) {
-
-      // parse json data into list of events
-      createEventList(data.relationships)
-      setEventsInView(eventList)
-
-      console.log(eventList)
-    }
-  }, [data])
-
-
-  // whenever the events in current view is updated, we get the new range
-  useEffect(() => {
-    getTimelineRange()
-    
-  }, [eventsInView])
-
-  // when the range is updated, get the date ticks!
-  useEffect(() => {
-    // TODO get the date ticks
-    console.log("range: ", timelineRange)
-    getTimelineTicks()
-  }, [timelineRange])
-
-  useEffect(() => {
-    console.log("timeline ticks: ", timelineTicks)
-  }, [timelineTicks]) 
-
-
-  useEffect(() => {
-    calculateSubTickMargins()
-
-    window.addEventListener('resize', calculateSubTickMargins)
-
-    return () => {
-      window.removeEventListener('resize', calculateSubTickMargins);
-    };
-  }, [])
-
-  useEffect(() => {
-    // Update the ticks based on the margin list
-    const newTicks = marginList.map((margin, index) => (
-      <div className="sub-tick" key={index} style={{ marginLeft: `${margin}px` }}></div>
-    ));
-    setTicks(newTicks);
-  }, [marginList]);
-
-  // TODO after the date ticks are populated, display to screen!
-
-  // TODO add buttons to zoom in/out ->
-    /* 
-      button should filter all events based on the date tick range
-      then set events in current view to the filtered list which causes the useEffect chain to trigger
-      range should also be pushed to rangeStack so you can back up and out
-
-      when zooming out, pop range from stack and filter events then set events in view as before
-    */
-  
-  
-
-
   return (
     <div className='timeline-background'>
       <div className="timeline-container">
-      
-        <div className="sub-timeline-container">
+        
+        <button className="sub-timeline-container" onClick={() => handleSubTimelineClick(0)}>
           <TimelineTick eventDate={timelineTicks[0]} isFirstTick={true}/>
           <div className="center-line"/>
           <div className="startcap"/>
           {ticks}
           <div className="endcap"/>
           <TimelineTick eventDate={timelineTicks[1]}/>
-        </div>
+        </button>
         
-        <div className="sub-timeline-container">
+        <button className="sub-timeline-container" onClick={() => handleSubTimelineClick(1)}>
           <div className="center-line"/>
           {ticks}
           <div className="endcap"/>
           <TimelineTick eventDate={timelineTicks[2]}/>
-        </div>
+        </button>
         
-        <div className="sub-timeline-container">
+        <button className="sub-timeline-container" onClick={() => handleSubTimelineClick(2)}>
           <div className="center-line"/>
           {ticks}
           <div className="endcap"/>
           <TimelineTick eventDate={timelineTicks[3]}/>
-        </div>
+        </button>
         
-        <div className="sub-timeline-container">
+        <button className="sub-timeline-container" onClick={() => handleSubTimelineClick(3)}>
           <div className="center-line"/>
           {ticks}
           <div className="endcap"/>
           <TimelineTick eventDate={timelineTicks[4]}/>
-        </div>
+        </button>
       
       </div>
     </div>

@@ -30,6 +30,7 @@
     width: 5px;
     position: absolute;
     right: 0;
+    top: 0;
     border-radius: 5px;
 }
 
@@ -38,7 +39,8 @@
     height: 100%;
     width: 5px;
     position: absolute;
-    left: 0;
+    left: 0px;
+    top:0;
     border-radius: 5px;
 }
 
@@ -48,6 +50,20 @@
     box-sizing: border-box;
     position: relative;
     height: 10vh;
+    padding: 0;
+    margin: 0;
+
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.sub-timeline-container:hover {
+    background-color: rgba(180, 180, 180, 0.4);
+}
+
+.sub-timeline-container:active {
+    background-color: rgba(180, 180, 180, 0.7);
 }
 
 .first-tick {
