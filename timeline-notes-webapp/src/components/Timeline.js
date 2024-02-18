@@ -339,6 +339,17 @@ export default function Timeline({data}) {
     getEventsInView()    
   }
 
+  function handleBackClick() {
+    const newRangeStack = [...rangeStack]
+
+    if (newRangeStack.length === 0) {return}
+
+    const priorRange = newRangeStack.pop()
+
+    setRangeStack(newRangeStack)
+    setTimelineRange(priorRange)
+  }
+
 
   // on load calculate base stats of timeline
   // this should run once on page load, when data is recieved
@@ -389,6 +400,17 @@ export default function Timeline({data}) {
     setTicks(newTicks);
   }, [marginList]);
 
+  useEffect(() => {
+    const backButton = document.getElementById('backButton')
+    if (rangeStack.length === 0) {
+      // hide back button
+      backButton.style.display = 'none'
+    } else {
+      // show back button
+      backButton.style.display = 'block'
+    }
+  }, [rangeStack])
+
   // TODO add buttons to zoom in/out ->
     /* 
       button should filter all events based on the date tick range
@@ -406,14 +428,14 @@ export default function Timeline({data}) {
     if (isFirstTick) {
       return (
         <div className="first-tick">
-          {(eventDate.year < 0) ?  <div className='f-inner-tick'>Year: {(eventDate.year * -1).toLocaleString()} BCE</div> : <div className='f-inner-tick'>Year: {(eventDate.year)} CE</div>}
+          {(eventDate.year < 0) ?  <div className='f-inner-tick'>{(eventDate.year * -1).toLocaleString()} BCE</div> : <div className='f-inner-tick'>{(eventDate.year)} CE</div>}
         </div>
         
       )
     } else {
       return (
         <div className="timeline-tick">
-          {(eventDate.year < 0) ?  <div className='inner-tick'>Year: {(eventDate.year * -1).toLocaleString()} BCE</div> : <div className='inner-tick'>Year: {(eventDate.year)} CE</div>}
+          {(eventDate.year < 0) ?  <div className='inner-tick'>{(eventDate.year * -1).toLocaleString()} BCE</div> : <div className='inner-tick'>{(eventDate.year)} CE</div>}
         </div>
       )
     }
@@ -421,6 +443,11 @@ export default function Timeline({data}) {
 
   return (
     <div className='timeline-background'>
+      <button 
+        id='backButton' 
+        className='back-button'
+        onClick={() => handleBackClick()}
+      />
       <div className="timeline-container">
         
         <button className="sub-timeline-container" onClick={() => handleSubTimelineClick(0)}>
