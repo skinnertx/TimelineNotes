@@ -15,6 +15,11 @@
     width: calc(100% - 125px);
 }
 
+.timeline-container > div {
+    display: flex;
+    /* Add any other styles you need for the inner div */
+  }
+
 
 .center-line {
     background-color: antiquewhite;
@@ -124,6 +129,7 @@
     justify-content: center;
     border-radius: 8px;
     background-image: url(../assets/backArrow.png);
+    display: none;
 }
 
 .back-button:hover {

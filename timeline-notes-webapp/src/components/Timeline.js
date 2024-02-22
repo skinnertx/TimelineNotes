@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import '../styles/Timeline.css'
 
 // this should probly have been an enum
@@ -33,6 +33,33 @@ class Event {
   isRange() {
     return this.startDate.equals(this.endDate)
   }
+
+  // get placement as a percentage alng the timeline range
+  // if it is outside the range, cap it back to the endpoints
+  // we should be guaranteed some overlap with the range
+  getEventPlacement(event) {
+
+    const startSec = this.startDate.seconds()
+    const endSec = this.endDate.seconds()
+
+
+    const evStartSec = event.startDate.seconds()
+    const evEndSec = event.endDate.seconds()
+
+    let evStartOffset = (evStartSec - startSec) / (endSec - startSec)
+    let evEndOffset = (evEndSec - startSec) / (endSec - startSec)
+
+    // cap outputs
+    if (evStartOffset < 0) {
+      evStartOffset = 0
+    }
+    if (evEndOffset > 1) {
+      evEndOffset = 1
+    }
+
+    return [evStartOffset, evEndOffset]
+  }
+
 
   // return enum of RangeOverlap
   // usage, this.findOverlapRange(sd, ed)
@@ -239,6 +266,10 @@ export default function Timeline({data}) {
   const [marginList, setMarginList] = useState([])
   const [ticks, setTicks] = useState([]);
 
+  const timelineRef = useRef(null)
+
+  const [timelineWidth, setTimelineWidth] = useState(0);
+
   // create the list of events from json data
   function createEventList(relationships) {
 
@@ -253,13 +284,12 @@ export default function Timeline({data}) {
       tempEventList.push(event)
     })
 
-    setEventList(prevEventList => [...prevEventList, ...tempEventList])
+    setEventList(tempEventList)
   }
 
   // get the earliest and latests dates in the list
   // called on load
-  function getTimelineRange() {
-    console.log("called update range")
+  function getInitialTimelineRange() {
     if (eventList.length === 0) { return }
     // special infinity dates
     let earliestStartDate = new EventDate("+")
@@ -303,18 +333,25 @@ export default function Timeline({data}) {
     setMarginList(margins)
   };
 
+  // some repeated work here!!!
+  const handleResize = () => {
+    calculateSubTickMargins()
+    if (timelineRef.current) {
+      setTimelineWidth(timelineRef.current.offsetWidth * 4)
+    }
+  };
+
   // filter events by current range
   function getEventsInView() {
-
+    if (timelineRange.length !== 2) { return }
     let filteredEvents = []
-    console.log(eventsInView)
 
       // filter events based on timeline range
-      eventsInView.forEach((ev) => {
+      eventList.forEach((ev) => {
         const overlapType = ev.findOverlapRange(timelineRange[0], timelineRange[1])
         if (overlapType !== RangeOverlap.NONE) {
+
           filteredEvents.push(ev)
-          console.log(overlapType)
         }
       })
     
@@ -346,6 +383,7 @@ export default function Timeline({data}) {
 
     const priorRange = newRangeStack.pop()
 
+    console.log("pressed back")
     setRangeStack(newRangeStack)
     setTimelineRange(priorRange)
   }
@@ -358,36 +396,37 @@ export default function Timeline({data}) {
 
       // parse json data into list of events
       createEventList(data.relationships)
-      setEventsInView(eventList)
-
-      // set the timeline range based on event list
-      getTimelineRange()
-      
-      console.log(eventList)
     }
   }, [data])
+
+  useEffect(() => {
+    if (eventList.length > 0) {
+      getInitialTimelineRange();
+    }
+  }, [eventList]);
 
   // when the range is updated, get the date ticks!
   // also set events in view based on range
   useEffect(() => {
     // TODO get the date ticks
-    console.log("range: ", timelineRange)
     getTimelineTicks()
     getEventsInView()
   }, [timelineRange])
 
-  useEffect(() => {
-    console.log("timeline ticks: ", timelineTicks)
-  }, [timelineTicks]) 
+  // useEffect(() => {
+  //   console.log("timeline ticks: ", timelineTicks)
+  // }, [timelineTicks]) 
 
   // used to resize ui on page size change
   useEffect(() => {
-    calculateSubTickMargins()
+    
+    handleResize()
+    
 
-    window.addEventListener('resize', calculateSubTickMargins)
+    window.addEventListener('resize', handleResize)
 
     return () => {
-      window.removeEventListener('resize', calculateSubTickMargins);
+      window.removeEventListener('resize', handleResize);
     };
   }, [])
 
@@ -410,6 +449,26 @@ export default function Timeline({data}) {
       backButton.style.display = 'block'
     }
   }, [rangeStack])
+
+  // when the width of the timeline changes, replace events on timeline!
+  // when the eventsInView Change, replace events on timeline
+  useEffect(() => {
+    if (timelineRange.length === 0) { return }
+
+    const startDate = timelineRange[0]
+    const endDate = timelineRange[1]
+
+    const timelineRangeEvent = new Event(startDate, endDate, "", "")
+
+    console.log("===============")
+    eventsInView.forEach((ev) => {
+
+      const evOffsets = timelineRangeEvent.getEventPlacement(ev)
+      console.log(ev)
+      console.log(evOffsets)
+    })
+
+  }, [timelineWidth, eventsInView])
 
   // TODO add buttons to zoom in/out ->
     /* 
@@ -450,7 +509,7 @@ export default function Timeline({data}) {
       />
       <div className="timeline-container">
         
-        <button className="sub-timeline-container" onClick={() => handleSubTimelineClick(0)}>
+        <button ref={timelineRef} className="sub-timeline-container" onClick={() => handleSubTimelineClick(0)}>
           <TimelineTick eventDate={timelineTicks[0]} isFirstTick={true}/>
           <div className="center-line"/>
           <div className="startcap"/>
