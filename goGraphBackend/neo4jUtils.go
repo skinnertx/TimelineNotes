@@ -135,6 +135,9 @@ func extractVariables(content string) ([]Match, error) {
 			if !isValidDate(match[3]) || !isValidDate(match[4]) {
 				return nil, fmt.Errorf("invalid date string")
 			}
+			if match[1] == "" || len(match[1]) > 100 {
+				return nil, fmt.Errorf("invalid event name: %s", match[1])
+			}
 			m := Match{
 				Text:         match[1],
 				TimelineName: match[2],
@@ -161,7 +164,7 @@ func updateTimelines(parent string, fileName string, file multipart.File) error 
 	for _, match := range matches {
 		fmt.Println("found match for ", match.TimelineName)
 		fmt.Println(match)
-		err := updateTimeline(parent, fileName, match.TimelineName, match.StartDate, match.EndDate)
+		err := updateTimeline(match.Text, parent, fileName, match.TimelineName, match.StartDate, match.EndDate)
 		if err != nil {
 			fmt.Println("got error", err)
 			return err
@@ -173,7 +176,7 @@ func updateTimelines(parent string, fileName string, file multipart.File) error 
 	return nil
 }
 
-func updateTimeline(parent string, fileName string, timelineName string, startDate string, endDate string) error {
+func updateTimeline(eventName string, parent string, fileName string, timelineName string, startDate string, endDate string) error {
 
 	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
@@ -186,8 +189,8 @@ func updateTimeline(parent string, fileName string, timelineName string, startDa
 		WITH d, f, t
 		WHERE t IS NOT NULL
 		MERGE (t)-[r:LINKED]->(f)
-		ON CREATE SET r.startDate = $startDate, r.endDate = $endDate
-		ON MATCH SET r.startDate = $startDate, r.endDate = $endDate
+		ON CREATE SET r.startDate = $startDate, r.endDate = $endDate, r.name = $ev
+		ON MATCH SET r.startDate = $startDate, r.endDate = $endDate, r.name = $ev
 		RETURN t IS NOT NULL AS timelineFound
 		`,
 		map[string]interface{}{
@@ -196,6 +199,7 @@ func updateTimeline(parent string, fileName string, timelineName string, startDa
 			"timelineName": timelineName,
 			"startDate":    startDate,
 			"endDate":      endDate,
+			"ev":           eventName,
 		},
 	)
 	if err != nil {
@@ -226,6 +230,7 @@ type RelationshipLink struct {
 	FileName     string `json:"fileName"`
 	StartDate    string `json:"startDate"`
 	EndDate      string `json:"endDate"`
+	EventName    string `json:"eventName"`
 }
 
 type TimelineWithRelationships struct {
@@ -301,6 +306,7 @@ func getTimelineContents(timelineName string) (*TimelineWithRelationships, error
 			relStruct.EndDate = linkMap["endDate"].(string)
 			relStruct.FileName = fileName.(string)
 			relStruct.ParentFolder = parentName.(string)
+			relStruct.EventName = linkMap["name"].(string)
 			timeline.Relationships = append(timeline.Relationships, relStruct)
 
 		}

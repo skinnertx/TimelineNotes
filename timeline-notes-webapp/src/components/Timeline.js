@@ -23,11 +23,12 @@ class Event {
   // ed: EventDate
   // parent: string
   // fileName: string
-  constructor(sd, ed, parent, fileName) {
+  constructor(sd, ed, parent, fileName, eventName) {
     this.startDate = sd
     this.endDate = ed
     this.parent = parent
     this.fileName = fileName
+    this.eventName = eventName
   }
 
   isRange() {
@@ -279,7 +280,7 @@ export default function Timeline({data}) {
       let eventStartDate = new EventDate(rel.startDate)
       let eventEndDate = new EventDate(rel.endDate)
 
-      let event = new Event(eventStartDate, eventEndDate, rel.parentFolder, rel.fileName)
+      let event = new Event(eventStartDate, eventEndDate, rel.parentFolder, rel.fileName, rel.eventName)
 
       tempEventList.push(event)
     })
@@ -393,7 +394,7 @@ export default function Timeline({data}) {
   // this should run once on page load, when data is recieved
   useEffect(() => {
     if (data && data.relationships) {
-
+      console.log(data.relationships)
       // parse json data into list of events
       createEventList(data.relationships)
     }
@@ -458,13 +459,11 @@ export default function Timeline({data}) {
     const startDate = timelineRange[0]
     const endDate = timelineRange[1]
 
-    const timelineRangeEvent = new Event(startDate, endDate, "", "")
+    const timelineRangeEvent = new Event(startDate, endDate, "", "", "range ev")
 
-    console.log("===============")
     eventsInView.forEach((ev) => {
 
       const evOffsets = timelineRangeEvent.getEventPlacement(ev)
-      console.log(ev)
       console.log(evOffsets)
     })
 
@@ -498,6 +497,16 @@ export default function Timeline({data}) {
         </div>
       )
     }
+  }
+
+  function TimelineEvent({ev, offsets}) {
+
+
+    return (
+      <div>
+        test text
+      </div>
+    )
   }
 
   return (

@@ -26,6 +26,7 @@ export default function TimelineViewer() {
                     }
     
                     const timelineJson = await response.json();
+                    console.log(timelineJson)
                     setTimelineData(timelineJson)
     
                 } catch (error) {
