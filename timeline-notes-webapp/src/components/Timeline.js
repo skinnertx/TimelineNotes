@@ -32,7 +32,7 @@ class Event {
   }
 
   isRange() {
-    return this.startDate.equals(this.endDate)
+    return !this.startDate.equals(this.endDate)
   }
 
   // get placement as a percentage alng the timeline range
@@ -271,6 +271,8 @@ export default function Timeline({data}) {
 
   const [timelineWidth, setTimelineWidth] = useState(0);
 
+  const [eventOffsets, setEventOffsets] = useState([])
+
   // create the list of events from json data
   function createEventList(relationships) {
 
@@ -286,6 +288,53 @@ export default function Timeline({data}) {
     })
 
     setEventList(tempEventList)
+  }
+
+  function addTimelinePadding(timelineRange) {
+    let newSD = timelineRange[0].seconds() * 1.1
+    let newED = timelineRange[1].seconds() * 1.1
+
+    // start date padded
+    let newStart = new EventDate("e")
+
+    newStart.year = Math.floor(newSD / secInYear)
+    newSD -= newStart.year * secInYear
+
+    newStart.month = Math.floor(newSD / secInYear)
+    newSD -= newStart.month * secInMonth
+
+    newStart.day = Math.floor(newSD / secInDay)
+    newSD -= newStart.day * secInDay
+
+    newStart.hour = Math.floor(newSD / secInHour)
+    newSD -= newStart.hour * secInHour
+
+    newStart.minute = Math.floor(newSD / secInMinute)
+    newSD -= newStart.minute * secInMinute
+
+    newStart.second = newSD
+
+    // end date padded
+    let newEnd = new EventDate("e")
+
+    newEnd.year = Math.floor(newED / secInYear)
+    newED -= newEnd.year * secInYear
+
+    newEnd.month = Math.floor(newED / secInMonth)
+    newED -= newEnd.month * secInMonth
+
+    newEnd.day = Math.floor(newED / secInDay)
+    newED -= newEnd.day * secInDay
+
+    newEnd.hour = Math.floor(newED / secInHour)
+    newED -= newEnd.hour * secInHour
+
+    newEnd.minute = Math.floor(newED / secInMinute)
+    newED -= newEnd.minute * secInMinute
+
+    newEnd.second = newED
+    
+    return([newStart, newEnd])
   }
 
   // get the earliest and latests dates in the list
@@ -306,7 +355,8 @@ export default function Timeline({data}) {
       }
     })
 
-    setTimelineRange([earliestStartDate, latestEndDate])
+    setTimelineRange(addTimelinePadding([earliestStartDate, latestEndDate]))
+    //setTimelineRange([earliestStartDate,latestEndDate])
   }
 
   // set timeline ticks
@@ -338,7 +388,7 @@ export default function Timeline({data}) {
   const handleResize = () => {
     calculateSubTickMargins()
     if (timelineRef.current) {
-      setTimelineWidth(timelineRef.current.offsetWidth * 4)
+      setTimelineWidth(Math.floor(timelineRef.current.offsetWidth * 4))
     }
   };
 
@@ -371,6 +421,8 @@ export default function Timeline({data}) {
     // get new range
     const startDate = timelineTicks[section]
     const endDate = timelineTicks[(section + 1)]
+
+    // TODO add padding to either side of range clicked!
     setTimelineRange([startDate, endDate])
 
     // filter events
@@ -461,11 +513,15 @@ export default function Timeline({data}) {
 
     const timelineRangeEvent = new Event(startDate, endDate, "", "", "range ev")
 
+    const newOffsets = []
     eventsInView.forEach((ev) => {
 
       const evOffsets = timelineRangeEvent.getEventPlacement(ev)
-      console.log(evOffsets)
+      newOffsets.push(evOffsets)
     })
+
+    console.log(newOffsets)
+    setEventOffsets(newOffsets)
 
   }, [timelineWidth, eventsInView])
 
@@ -499,14 +555,46 @@ export default function Timeline({data}) {
     }
   }
 
+
+  // TODO:
+  // get better icons
+  // make range graphic
+  // figure out how to stop overlap stuff
+  // make button go to event
+  // get ticks to display times other than years
   function TimelineEvent({ev, offsets}) {
 
+    if (!offsets) {
+      return null
+    }
+    console.log("off: ",offsets)
+    const e1Offset = offsets[0] * timelineWidth - 24
+    const e2Offset = offsets[1] * timelineWidth - 24
 
-    return (
-      <div>
-        test text
-      </div>
-    )
+    console.log("pixel offs:", e1Offset, e2Offset)
+
+    if (!ev.isRange()) {
+      return (
+        <div className='timeline-event-container'>
+          <button className='timeline-event' style={{left: `${e1Offset}px`}}>
+            <div className='timeline-event-name'>{ev.eventName}</div>
+          </button>
+        </div>
+      )
+    } else {
+      return (
+        <div className='timeline-event-container'>
+          <button className='timeline-event' style={{left: `${e1Offset}px`}}>
+            <div className='timeline-event-name'>{ev.eventName}</div>
+          </button>
+          <button className='timeline-event' style={{left: `${e2Offset}px`}}>
+            <div className='timeline-event-name'>{ev.eventName}</div>
+          </button>
+        </div>
+      )
+    }
+
+
   }
 
   return (
@@ -517,7 +605,9 @@ export default function Timeline({data}) {
         onClick={() => handleBackClick()}
       />
       <div className="timeline-container">
-        
+        {eventsInView.map((item, index )=> (
+          <TimelineEvent key={index} ev={item} offsets={eventOffsets[index]} />
+        ))}
         <button ref={timelineRef} className="sub-timeline-container" onClick={() => handleSubTimelineClick(0)}>
           <TimelineTick eventDate={timelineTicks[0]} isFirstTick={true}/>
           <div className="center-line"/>

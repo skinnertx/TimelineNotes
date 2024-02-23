@@ -9,16 +9,37 @@
 .timeline-container {
     display: flex;
     flex-direction: row;
-    padding: 0 10px;
+    padding: 0;
     margin: 0 auto;
     padding-top: 28vh;
     width: calc(100% - 125px);
 }
 
-.timeline-container > div {
-    display: flex;
-    /* Add any other styles you need for the inner div */
-  }
+.timeline-event-container {
+    position: relative;
+}
+.timeline-event {
+    position: absolute;
+    top: -5vh;
+    background-color: transparent;
+    background-image: url(../assets/eventMarker.png);
+    border: none;
+    background-size: cover;
+    cursor: pointer;
+    justify-content: center;
+    height: 48px;
+    width: 48px;
+    padding: 0;
+    color: white;
+}
+
+.timeline-event-name{
+    position: relative;
+    top: -40px;
+    font-family: 'Work Sans', sans-serif;
+}
+
+
 
 
 .center-line {
