@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import TimelineEvent from './TimelineEvent';
 import '../styles/Timeline.css'
 
 // this should probly have been an enum
@@ -555,48 +556,6 @@ export default function Timeline({data}) {
     }
   }
 
-
-  // TODO:
-  // get better icons
-  // make range graphic
-  // figure out how to stop overlap stuff
-  // make button go to event
-  // get ticks to display times other than years
-  function TimelineEvent({ev, offsets}) {
-
-    if (!offsets) {
-      return null
-    }
-    console.log("off: ",offsets)
-    const e1Offset = offsets[0] * timelineWidth - 24
-    const e2Offset = offsets[1] * timelineWidth - 24
-
-    console.log("pixel offs:", e1Offset, e2Offset)
-
-    if (!ev.isRange()) {
-      return (
-        <div className='timeline-event-container'>
-          <button className='timeline-event' style={{left: `${e1Offset}px`}}>
-            <div className='timeline-event-name'>{ev.eventName}</div>
-          </button>
-        </div>
-      )
-    } else {
-      return (
-        <div className='timeline-event-container'>
-          <button className='timeline-event' style={{left: `${e1Offset}px`}}>
-            <div className='timeline-event-name'>{ev.eventName}</div>
-          </button>
-          <button className='timeline-event' style={{left: `${e2Offset}px`}}>
-            <div className='timeline-event-name'>{ev.eventName}</div>
-          </button>
-        </div>
-      )
-    }
-
-
-  }
-
   return (
     <div className='timeline-background'>
       <button 
@@ -606,7 +565,14 @@ export default function Timeline({data}) {
       />
       <div className="timeline-container">
         {eventsInView.map((item, index )=> (
-          <TimelineEvent key={index} ev={item} offsets={eventOffsets[index]} />
+          <TimelineEvent 
+            key={index} 
+            layer={index}
+            ev={item} 
+            offsets={eventOffsets[index]} 
+            timelineWidth={timelineWidth}
+          
+          />
         ))}
         <button ref={timelineRef} className="sub-timeline-container" onClick={() => handleSubTimelineClick(0)}>
           <TimelineTick eventDate={timelineTicks[0]} isFirstTick={true}/>

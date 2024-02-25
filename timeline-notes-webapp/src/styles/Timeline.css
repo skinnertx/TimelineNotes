@@ -11,34 +11,9 @@
     flex-direction: row;
     padding: 0;
     margin: 0 auto;
-    padding-top: 28vh;
+    padding-top: 35vh;
     width: calc(100% - 125px);
 }
-
-.timeline-event-container {
-    position: relative;
-}
-.timeline-event {
-    position: absolute;
-    top: -5vh;
-    background-color: transparent;
-    background-image: url(../assets/eventMarker.png);
-    border: none;
-    background-size: cover;
-    cursor: pointer;
-    justify-content: center;
-    height: 48px;
-    width: 48px;
-    padding: 0;
-    color: white;
-}
-
-.timeline-event-name{
-    position: relative;
-    top: -40px;
-    font-family: 'Work Sans', sans-serif;
-}
-
 
 
 
