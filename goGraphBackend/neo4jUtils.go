@@ -188,9 +188,9 @@ func updateTimeline(eventName string, parent string, fileName string, timelineNa
 		MATCH (t:Timeline {name: $timelineName})
 		WITH d, f, t
 		WHERE t IS NOT NULL
-		MERGE (t)-[r:LINKED]->(f)
+		MERGE (t)-[r:LINKED {name: $ev}]->(f)
 		ON CREATE SET r.startDate = $startDate, r.endDate = $endDate, r.name = $ev
-		ON MATCH SET r.startDate = $startDate, r.endDate = $endDate, r.name = $ev
+		ON MATCH SET r.startDate = $startDate, r.endDate = $endDate
 		RETURN t IS NOT NULL AS timelineFound
 		`,
 		map[string]interface{}{
