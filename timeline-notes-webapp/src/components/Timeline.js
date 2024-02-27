@@ -44,7 +44,6 @@ class Event {
     const startSec = this.startDate.seconds()
     const endSec = this.endDate.seconds()
 
-
     const evStartSec = event.startDate.seconds()
     const evEndSec = event.endDate.seconds()
 
@@ -97,6 +96,11 @@ class Event {
     }
   }
 }
+
+// TODO
+// some way to get a string representation of a date
+// given a range? idk something to get sig figs basically
+// ie if the range is 1k years we dont need months shown
 
 class EventDate {
 
@@ -274,6 +278,8 @@ export default function Timeline({data}) {
 
   const [eventOffsets, setEventOffsets] = useState([])
 
+  const [rangeHeights, setRangeHeights] = useState([])
+
   // create the list of events from json data
   function createEventList(relationships) {
 
@@ -389,7 +395,7 @@ export default function Timeline({data}) {
   const handleResize = () => {
     calculateSubTickMargins()
     if (timelineRef.current) {
-      setTimelineWidth(Math.floor(timelineRef.current.offsetWidth * 4))
+      setTimelineWidth(timelineRef.current.offsetWidth * 4)
     }
   };
 
@@ -398,14 +404,44 @@ export default function Timeline({data}) {
     if (timelineRange.length !== 2) { return }
     let filteredEvents = []
 
-      // filter events based on timeline range
-      eventList.forEach((ev) => {
-        const overlapType = ev.findOverlapRange(timelineRange[0], timelineRange[1])
-        if (overlapType !== RangeOverlap.NONE) {
+    // filter events based on timeline range
+    eventList.forEach((ev) => {
+      const overlapType = ev.findOverlapRange(timelineRange[0], timelineRange[1])
+      if (overlapType !== RangeOverlap.NONE) {
 
-          filteredEvents.push(ev)
+        filteredEvents.push(ev)
+      }
+    })
+
+    // sort events in view by start date
+    filteredEvents.sort((a,b) => a.startDate.seconds() - b.startDate.seconds())
+
+    let rangeStacks = []
+    let prev = null
+    let stacks = 0;
+
+    // get stack height offset for overlapping ranges
+    filteredEvents.forEach((ev) => {
+      if (!ev.isRange()) {
+        rangeStacks.push(0)
+        return
+      }
+
+      if (prev !== null) {
+        if (ev.startDate.compare(prev) < 0) {
+          stacks += 4
+        } else {
+          stacks = 0
         }
-      })
+      }
+      rangeStacks.push(stacks)
+
+      if (prev === null || prev.compare(ev.endDate) < 0) {
+        prev = ev.endDate
+      }
+    })
+
+    setRangeHeights(rangeStacks)
     
     setEventsInView(filteredEvents)
   }
@@ -451,6 +487,9 @@ export default function Timeline({data}) {
       // parse json data into list of events
       createEventList(data.relationships)
     }
+    if (timelineRef.current) {
+      setTimelineWidth(timelineRef.current.offsetWidth * 4)
+    }
   }, [data])
 
   useEffect(() => {
@@ -476,7 +515,6 @@ export default function Timeline({data}) {
     
     handleResize()
     
-
     window.addEventListener('resize', handleResize)
 
     return () => {
@@ -521,7 +559,6 @@ export default function Timeline({data}) {
       newOffsets.push(evOffsets)
     })
 
-    console.log(newOffsets)
     setEventOffsets(newOffsets)
 
   }, [timelineWidth, eventsInView])
@@ -571,7 +608,7 @@ export default function Timeline({data}) {
             ev={item} 
             offsets={eventOffsets[index]} 
             timelineWidth={timelineWidth}
-          
+            rangeHeight={rangeHeights[index]}
           />
         ))}
         <button ref={timelineRef} className="sub-timeline-container" onClick={() => handleSubTimelineClick(0)}>

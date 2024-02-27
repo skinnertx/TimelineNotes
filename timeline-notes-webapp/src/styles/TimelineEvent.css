@@ -9,9 +9,10 @@
     height: 20px; /* Initial height */
     background-color: #bbb;
     color: greenyellow;
-    border: 4px solid #338;
+    border: 3px solid #338;
     border-radius: 20px;
     transition: all 0.3s ease;
+    z-index: 2;
 }
 
 .event-button.clicked {
@@ -21,6 +22,16 @@
     transform: translateY(-10vh);
   }
   
+.event-range {
+    position: absolute;
+    height: 1vh;
+    border-left: 3px solid;
+    border-right: 3px solid;
+    border-top: 3px solid;
+    border-color: #338;
+    border-radius: 3px;
+}
+
 .event-name {
     display: none;
 }
@@ -46,19 +57,16 @@
 .event-line {
     position: absolute;
     z-index: -1;
-    left: 7px;
-    top: 2.5vh;
-    width: 6px;
-    height: 7vh;
+    left: 8px;
+    top: 20px;
+    width: 4px;
+    height: 6vh;
     background-color: #338;
     border-bottom: 2px solid transparent;
     border-radius: 10px;
+    z-index: -1;
 }
 
-.bracket-svg {
-    position: absolute;
+.range-button-container {
+    position: relative;
 }
-
-/* 
-background: linear-gradient(90deg, rgba(255,251,93,1) 16%, rgba(203,139,55,1) 53%, rgba(255,159,190,1) 94%);
-*/
