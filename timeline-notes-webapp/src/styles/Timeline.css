@@ -13,6 +13,7 @@
     margin: 0 auto;
     padding-top: 35vh;
     width: calc(100% - 125px);
+    z-index: 0;
 }
 
 
@@ -134,4 +135,31 @@
 
 .back-button:active {
     background-color: rgba(180, 180, 180, 0.7);
+}
+
+.show-events-button {
+    height: 5vh;
+    width: 5vh;
+    min-width: 20px;
+    min-height: 20px;
+    max-width: 32px;
+    max-height: 32px;
+    right: 70px;
+    position: absolute;
+    margin: 20px;
+    border: none;
+    background: none;
+    background-size: contain;
+    cursor: pointer;
+    justify-content: center;
+    border-radius: 8px;
+    background-image: url(../assets/moonlight.png);
+}
+
+.show-events-button:hover {
+    background-color: rgba(180, 180, 180, 0.4);
+}
+
+.show-events-button.show-active {
+    background-image: url(../assets/sunlight.png);
 }

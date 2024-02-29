@@ -1,5 +1,6 @@
 .timeline-event-container {
     position: relative;
+    z-index: 2;
 }
 
 .event-button {
@@ -7,19 +8,19 @@
     position: absolute;
     width: 20px; /* Initial width */
     height: 20px; /* Initial height */
-    background-color: #bbb;
+    background-image: url(../assets/moon.png);
     color: greenyellow;
     border: 3px solid #338;
     border-radius: 20px;
     transition: all 0.3s ease;
-    z-index: 2;
 }
 
 .event-button.clicked {
     border-color: #EB8258;
-    background-color: #FFBE0B;
+    background-image: url(../assets/sun.png);
     transform: scale(1.1);
     transform: translateY(-10vh);
+    z-index: 2;
   }
   
 .event-range {
@@ -69,4 +70,5 @@
 
 .range-button-container {
     position: relative;
+    z-index: 2;
 }

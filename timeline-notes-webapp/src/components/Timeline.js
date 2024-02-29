@@ -280,6 +280,8 @@ export default function Timeline({data}) {
 
   const [rangeHeights, setRangeHeights] = useState([])
 
+  const [showEvents, setShowEvents] = useState(false)
+
   // create the list of events from json data
   function createEventList(relationships) {
 
@@ -478,6 +480,13 @@ export default function Timeline({data}) {
     setTimelineRange(priorRange)
   }
 
+  function handleShowEvents() {
+    console.log("HELP")
+    console.log(showEvents)
+
+    setShowEvents(!showEvents)
+  }
+
 
   // on load calculate base stats of timeline
   // this should run once on page load, when data is recieved
@@ -600,6 +609,10 @@ export default function Timeline({data}) {
         className='back-button'
         onClick={() => handleBackClick()}
       />
+      <button
+        className={`show-events-button ${showEvents ? 'show-active' : ''}`}
+        onClick={() => handleShowEvents()}
+      />  
       <div className="timeline-container">
         {eventsInView.map((item, index )=> (
           <TimelineEvent 
@@ -609,6 +622,7 @@ export default function Timeline({data}) {
             offsets={eventOffsets[index]} 
             timelineWidth={timelineWidth}
             rangeHeight={rangeHeights[index]}
+            isClicked={showEvents}
           />
         ))}
         <button ref={timelineRef} className="sub-timeline-container" onClick={() => handleSubTimelineClick(0)}>
