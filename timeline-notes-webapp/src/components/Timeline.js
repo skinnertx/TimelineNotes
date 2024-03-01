@@ -9,6 +9,8 @@ const secInDay = 24 * 60 * 60
 const secInHour = 60 * 60
 const secInMinute = 60
 
+const monthAbbreviations = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 const RangeOverlap = {
   NONE: 0,
   CONTAINED: 1,
@@ -247,6 +249,38 @@ class EventDate {
 
     return sum
   }
+
+  // return absolute value of year as a string (DOES NOT INCLUDE BC/BCE)
+  toStringWithSig(rangeSD, rangeED) {
+    // default case
+    if (!rangeSD || !rangeED) {
+      return Math.abs(this.year)
+    }
+
+    // seconds of the time gap
+    const timeGap = rangeED.seconds() - rangeSD.seconds()
+
+    let evString = ''
+
+    evString += Math.abs(this.year)
+    if (timeGap > secInYear * 2) {
+      return evString
+    }
+
+    evString = monthAbbreviations[this.month] + ", " + evString
+    if (timeGap > secInMonth * 2) {
+      return evString
+    }
+
+    evString = this.day + ", " + evString
+    if (timeGap > secInDay * 5) {
+      return evString
+    }
+
+    evString = evString + "$" +  this.hour + ":" + this.minute + ":" + Math.floor(this.second)
+
+    return evString
+  }
 }
 
 export default function Timeline({data}) {
@@ -461,7 +495,6 @@ export default function Timeline({data}) {
     const startDate = timelineTicks[section]
     const endDate = timelineTicks[(section + 1)]
 
-    // TODO add padding to either side of range clicked!
     setTimelineRange([startDate, endDate])
 
     // filter events
@@ -510,7 +543,6 @@ export default function Timeline({data}) {
   // when the range is updated, get the date ticks!
   // also set events in view based on range
   useEffect(() => {
-    // TODO get the date ticks
     getTimelineTicks()
     getEventsInView()
   }, [timelineRange])
@@ -572,31 +604,38 @@ export default function Timeline({data}) {
 
   }, [timelineWidth, eventsInView])
 
-  // TODO add buttons to zoom in/out ->
-    /* 
-      button should filter all events based on the date tick range
-      then set events in current view to the filtered list which causes the useEffect chain to trigger
-      range should also be pushed to rangeStack so you can back up and out
-
-      when zooming out, pop range from stack and filter events then set events in view as before
-    */
-
   // helper dispaly component function
   function TimelineTick({eventDate, isFirstTick = false }) {
 
     if (!eventDate) {return}
 
+    let dateLarge = ''
+    let dateSmall = ''
+
+    const dateString = eventDate.toStringWithSig(timelineRange[0], timelineRange[1])
+    const dateSplit = dateString.split("$")
+    dateLarge = dateSplit[0]
+    if (dateSplit.length > 1) {
+      dateSmall = dateSplit[1]
+    }
+
     if (isFirstTick) {
       return (
         <div className="first-tick">
-          {(eventDate.year < 0) ?  <div className='f-inner-tick'>{(eventDate.year * -1).toLocaleString()} BCE</div> : <div className='f-inner-tick'>{(eventDate.year)} CE</div>}
+          <div className='f-inner-tick'>
+            <div>{dateLarge} {eventDate.year < 0 ? " BCE" : " CE"}</div>
+            <div>{dateSmall}</div>
+          </div>
         </div>
         
       )
     } else {
       return (
         <div className="timeline-tick">
-          {(eventDate.year < 0) ?  <div className='inner-tick'>{(eventDate.year * -1).toLocaleString()} BCE</div> : <div className='inner-tick'>{(eventDate.year)} CE</div>}
+          <div className='inner-tick'>
+            <div>{dateLarge} {eventDate.year < 0 ? " BCE" : " CE"}</div>
+            <div>{dateSmall}</div>
+          </div>
         </div>
       )
     }

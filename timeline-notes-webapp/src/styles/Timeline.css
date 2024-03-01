@@ -72,6 +72,7 @@
     position: absolute; 
     left: -8px;
     bottom: 0;
+    
 }
 
 .f-inner-tick {
@@ -83,7 +84,6 @@
     color: antiquewhite;
     font-family: 'Work Sans', sans-serif;
     font-size: 2.5vh;
-
 }
 
 
