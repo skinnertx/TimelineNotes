@@ -1,8 +1,6 @@
   import React, { useEffect, useState } from 'react'
   import '../styles/TimelineEvent.css'
 
-  import { useNavigate } from 'react-router-dom';
-
   function EventRangeGraphic({bracketWidth, leftOffset, heightOffset, isClicked}) {
 
     return (
@@ -16,12 +14,6 @@
     )
   }
   
-
-  // TODO:
-  // make range graphic
-    // use an svg and scale it?
-  // figure out how to stop overlap stuff
-  // get ticks to display times other than years
   export default function TimelineEvent({layer, ev, offsets, timelineWidth, rangeHeight, isClicked=false}) {
 
     const [clicked, setClicked] = useState(isClicked);
@@ -61,10 +53,10 @@
                         <button 
                           className='event-name' 
                           onClick={() => window.open(`/markdown/${ev.parent}/${ev.fileName}`, '_blank')}
-                          style={{zIndex: 3}}
+                   
                         >
-                          <div style={{zIndex: 3}}>{ev.eventName}</div>
-                          <div style={{zIndex: 3}}>{ev.startDate.year}</div>
+                          <div >{ev.eventName}</div>
+                          <div >{ev.startDate.year}</div>
                             
                         </button>
                     )}
@@ -80,8 +72,6 @@
 
     } else {
 
-      // TODO split displaying ranges and buttons, ranges go first!
-
       return (
         <div className='timeline-event-container' >
           
@@ -93,26 +83,25 @@
               isClicked={clicked}
             />
           </div>
-          <div className='range-button-container' style={{top: `-${rangeHeight+4}vh`, zIndex: 3}}>
+          <div className={`range-button-container ${clicked ? 'clicked' : ''}`} style={{top: `-${rangeHeight+4}vh`, zIndex: 1}}>
             <div
                 className={`event-button ${clicked ? 'clicked' : ''}`}
-                style={{left: `${((e2Offset + e1Offset) / 2) - 8}px`, zIndex: 3}}
+                style={{left: `${((e2Offset + e1Offset) / 2) - 8}px`}}
                 onClick={handleClick}
-            >   
-                {clicked && (
+            ></div>
+            {clicked && (
                     <button 
                       className='event-name' 
                       onClick={() => window.open(`/markdown/${ev.parent}/${ev.fileName}`, '_blank')}
-                      style={{zIndex: 3}}
+                      style={{
+                        left: `${((e2Offset + e1Offset) / 2)}px`,
+                       
+                      }}
                     >
                         <div >{ev.eventName}</div>
                         <div >{ev.startDate.year} to {ev.endDate.year}</div>
                     </button>
                 )}
-
-                  
-                
-            </div>
           </div>
 
         </div>

@@ -1,6 +1,9 @@
 .timeline-event-container {
     position: relative;
-    z-index: 2;
+}
+
+.range-button-container .event-button {
+    top: -6vh;
 }
 
 .event-button {
@@ -9,7 +12,6 @@
     width: 20px; /* Initial width */
     height: 20px; /* Initial height */
     background-image: url(../assets/moon.png);
-    color: greenyellow;
     border: 3px solid #338;
     border-radius: 20px;
     transition: all 0.3s ease;
@@ -20,7 +22,6 @@
     background-image: url(../assets/sun.png);
     transform: scale(1.1);
     transform: translateY(-10vh);
-    z-index: 2;
   }
   
 .event-range {
@@ -35,6 +36,25 @@
 
 .event-name {
     display: none;
+    z-index: 2;
+}
+
+.range-button-container.clicked .event-name {
+    display: inline-block;
+    position: absolute;
+    background-color: #fff;
+    padding: 5px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-width: 100px;
+    max-width: 200px;
+    text-align: center;
+    font-size: 14px;
+    font-family: 'Work Sans', sans-serif;
+    left: 50%;
+    transform: translate(-50%);
+    top: -11vh;
 }
 
 .event-button.clicked .event-name {
@@ -57,7 +77,6 @@
 
 .event-line {
     position: absolute;
-    z-index: -1;
     left: 8px;
     top: 20px;
     width: 4px;
@@ -65,10 +84,8 @@
     background-color: #338;
     border-bottom: 2px solid transparent;
     border-radius: 10px;
-    z-index: -1;
 }
 
 .range-button-container {
     position: relative;
-    z-index: 2;
 }
