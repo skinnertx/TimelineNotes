@@ -250,7 +250,19 @@ class EventDate {
     return sum
   }
 
+  toStringDesc() {
+    let evString = ''
+    evString += Math.abs(this.year)
+
+    evString = monthAbbreviations[this.month] + ", " + evString
+
+    evString = this.day + ", " + evString
+
+    return evString
+  }
+
   // return absolute value of year as a string (DOES NOT INCLUDE BC/BCE)
+  // used for timeline zoom loot!
   toStringWithSig(rangeSD, rangeED) {
     // default case
     if (!rangeSD || !rangeED) {

@@ -57,6 +57,10 @@
     top: -11vh;
 }
 
+.range-button-container.clicked .event-name:hover {
+    background-color: rgba(220, 220, 220, 1);
+}
+
 .event-button.clicked .event-name {
     display: inline-block;
     position: absolute;
@@ -73,6 +77,10 @@
     top: -10%;
     left: 50%;
     transform: translate(-50%, 4vh);
+}
+
+.event-button.clicked .event-name:hover {
+    background-color: rgba(220, 220, 220, 1);
 }
 
 .event-line {

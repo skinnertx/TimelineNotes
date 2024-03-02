@@ -55,8 +55,8 @@
                           onClick={() => window.open(`/markdown/${ev.parent}/${ev.fileName}`, '_blank')}
                    
                         >
-                          <div >{ev.eventName}</div>
-                          <div >{ev.startDate.year}</div>
+                          <div><b>{ev.eventName}</b></div>
+                          <div>{ev.startDate.toStringDesc()} {ev.startDate.year < 0 ? " BCE" : " CE"}</div>
                             
                         </button>
                     )}
@@ -67,9 +67,6 @@
                 </div>
             </div>
         )
-
-
-
     } else {
 
       return (
@@ -98,8 +95,10 @@
                        
                       }}
                     >
-                        <div >{ev.eventName}</div>
-                        <div >{ev.startDate.year} to {ev.endDate.year}</div>
+                        <div> <b>{ev.eventName}</b></div>
+                        <div>{ev.startDate.toStringDesc()} {ev.startDate.year < 0 ? " BCE" : " CE"}</div>
+                        <div> to </div>
+                        <div> {ev.endDate.toStringDesc()} {ev.endDate.year < 0 ? " BCE" : " CE"}</div>
                     </button>
                 )}
           </div>
