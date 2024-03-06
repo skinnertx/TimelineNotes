@@ -40,4 +40,20 @@
     font-size: 25px;
     font-weight: bold;
   }
+
+  .login {
+    position: absolute;
+    right: 1vw;
+    
+  }
+
+  .login a {
+    font-size: 20px;
+    color: white;
+    text-decoration: none;
+  }
+
+  .login a:hover {
+    color: lightblue
+  }
   

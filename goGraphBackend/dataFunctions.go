@@ -5,9 +5,115 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 )
+
+/*
+******************************************************************
+
+	JWT TOKEN OPERATIONS
+
+******************************************************************
+*/
+type User struct {
+	Username string `json:"username"`
+}
+
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type TokenResponse struct {
+	Token string `json:"token"`
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var creds Credentials
+	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Printf("Received login request: %+v\n", creds)
+
+	if creds.Username != adminUser || creds.Password != adminPass {
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		fmt.Println("invalid user/pass")
+		return
+	}
+
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+	claims["username"] = creds.Username
+	claims["exp"] = time.Now().Add(time.Hour * 12).Unix()
+
+	tokenString, err := token.SignedString(jwtSecretKey)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
+	// Create a TokenResponse struct
+	response := TokenResponse{Token: tokenString}
+
+	// Encode the response struct as JSON
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println(tokenString)
+
+	// Set the Content-Type header
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response to the response writer
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+func validateToken(tokenString string) (jwt.MapClaims, error) {
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate the signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Invalid signing method")
+		}
+		return jwtSecretKey, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse token: %v", err)
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("Invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("Failed to get token claims")
+	}
+
+	expirationTime := time.Unix(int64(claims["exp"].(float64)), 0)
+	if time.Now().After(expirationTime) {
+		return nil, fmt.Errorf("Token expired")
+	}
+
+	return claims, nil
+}
 
 /*
 ******************************************************************

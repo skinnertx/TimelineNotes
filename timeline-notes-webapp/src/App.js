@@ -8,9 +8,25 @@ import Hierarchy from './routes/hierarchy';
 import MicromarkFile from './routes/markdownFile';
 import TimelineHierarchy from './routes/timelineHierarchy';
 import TimelineViewer from './routes/timelineViewer';
+import LoginPage from './routes/login';
 import GenericErrorPage from './errors/genericError';
+import React, {useEffect} from 'react';
+
 
 function App() {
+
+  useEffect(() => {
+    const clearLocalStorage = () => {
+      localStorage.clear();
+    };
+
+    window.addEventListener('beforeunload', clearLocalStorage);
+
+    return () => {
+      window.removeEventListener('beforeunload', clearLocalStorage);
+    };
+  }, []);
+  
   return (
     <>
     <Navbar />
@@ -40,6 +56,11 @@ function App() {
           path="/timeline-hierarchy"
           element={<TimelineHierarchy />}
           errorElement={<ErrorPage/>}
+        />
+        <Route 
+          path='/login'
+          element={<LoginPage />}
+          errorElement={<ErrorPage />}
         />
         <Route
           path='/error'

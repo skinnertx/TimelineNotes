@@ -11,6 +11,9 @@ export default function Navbar() {
         <li><Link to="/timeline-hierarchy">Timelines</Link></li>
         {/* Add more links for other markdown files */}
       </ul>
+      <div className='login'>
+        <Link to="/login">Login</Link>
+      </div>
     </nav>
   );
 };

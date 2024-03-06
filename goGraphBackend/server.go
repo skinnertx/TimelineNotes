@@ -17,6 +17,11 @@ var allowS3Upload = false // used in bulk upload to skip s3 upload
 var driver neo4j.DriverWithContext
 var ctx context.Context
 var svc *s3.S3
+var jwtSecretKey []byte
+
+// TODO: set up real user storage
+var adminUser string
+var adminPass string
 
 func main() {
 
@@ -29,6 +34,12 @@ func main() {
 	dbUri := os.Getenv("NEO4J_URI")
 	dbUser := os.Getenv("NEO4J_USERNAME")
 	dbPassword := os.Getenv("NEO4J_PASSWORD")
+
+	jwtSecretKeyString := os.Getenv("SECRET_KEY")
+	jwtSecretKey = []byte(jwtSecretKeyString)
+
+	adminUser = os.Getenv("ADMIN_USER")
+	adminPass = os.Getenv("ADMIN_PASS")
 
 	neo4jDriver, err := neo4j.NewDriverWithContext(
 		dbUri,
@@ -85,6 +96,8 @@ func main() {
 
 	r.HandleFunc("/api/delete/TimelineFolder/{parentFolder}/{childFolder}", deleteTLObject)
 	r.HandleFunc("/api/delete/Folder/{parentFolder}/{childFolder}", deleteFolderObject)
+
+	r.HandleFunc("/api/login", handleLogin)
 
 	err = http.ListenAndServe(":8080", r)
 	if err != nil {

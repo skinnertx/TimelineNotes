@@ -100,9 +100,9 @@ class Event {
 }
 
 // TODO
-// some way to get a string representation of a date
-// given a range? idk something to get sig figs basically
-// ie if the range is 1k years we dont need months shown
+// add user authen
+// fix note UI
+// upload to internet
 
 class EventDate {
 
