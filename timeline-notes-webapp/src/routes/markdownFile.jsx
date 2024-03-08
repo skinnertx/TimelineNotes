@@ -104,12 +104,22 @@ export default function MicromarkFile() {
             formData.append('file', blob, file);
 
             const uploadURL = config.backendBaseUrl + `save/markdown/${parent}`
+
+            const jwtToken = localStorage.getItem('token')
+
+            const headers = new Headers()
+            headers.append('Authorization', `Bearer ${jwtToken}`)
+
             response = await fetch(uploadURL, {
                 method: 'POST',
+                headers: headers,
                 body: formData,
             });
 
             if (!response.ok) {
+                if(response.status === 401) {
+                    alert("admin only, please login")
+                }
                 throw new Error(`Failed to save Markdown file (status ${response.status})`);
             }
 

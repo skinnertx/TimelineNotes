@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import config from "../config";
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
+
+    const navigate = useNavigate();
 
     const [userData, setUserData] = useState({
         username: '',
@@ -47,6 +50,9 @@ export default function LoginPage() {
                 const token = data.token
 
                 localStorage.setItem("token", token)
+                window.dispatchEvent(new Event('storage'))
+
+                document.cookie = `jwtAuth=${token}; path=/`
                 console.log("stored token")
                 setLoggedIn(true)
             })
@@ -55,6 +61,7 @@ export default function LoginPage() {
             });
 
         console.log('submitted: ', userData);
+       navigate(-1)
     }
 
     return (

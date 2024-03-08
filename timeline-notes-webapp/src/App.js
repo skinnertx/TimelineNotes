@@ -17,6 +17,7 @@ function App() {
 
   useEffect(() => {
     const clearLocalStorage = () => {
+      console.log("unloadin")
       localStorage.clear();
     };
 
@@ -26,7 +27,7 @@ function App() {
       window.removeEventListener('beforeunload', clearLocalStorage);
     };
   }, []);
-  
+
   return (
     <>
     <Navbar />

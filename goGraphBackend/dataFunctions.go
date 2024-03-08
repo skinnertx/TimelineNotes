@@ -84,35 +84,39 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-func validateToken(tokenString string) (jwt.MapClaims, error) {
+func isAuth(r *http.Request) (bool, error) {
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return false, fmt.Errorf("empty token")
+	}
+
+	tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Validate the signing method
+		// Check the signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Invalid signing method")
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
+		// Replace "secret" with your actual JWT secret key
 		return jwtSecretKey, nil
 	})
 
-	if err != nil {
-		return nil, fmt.Errorf("Failed to parse token: %v", err)
-	}
-
-	if !token.Valid {
-		return nil, fmt.Errorf("Invalid token")
+	if err != nil || !token.Valid {
+		return false, fmt.Errorf("invalid token")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, fmt.Errorf("Failed to get token claims")
+		return false, fmt.Errorf("Failed to get token claims")
 	}
 
 	expirationTime := time.Unix(int64(claims["exp"].(float64)), 0)
 	if time.Now().After(expirationTime) {
-		return nil, fmt.Errorf("Token expired")
+		return false, fmt.Errorf("Token expired")
 	}
 
-	return claims, nil
+	return true, nil
 }
 
 /*
@@ -151,7 +155,14 @@ func createMarkdownFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	parent := vars["parentFolder"]
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	auth, err := isAuth(r)
+	if !auth {
+		errString := "Unauthorized" + err.Error()
+		http.Error(w, errString, http.StatusUnauthorized)
+		return
+	}
+
+	err = r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
 		fmt.Println("Error parsing multipart form:", err)
 		return
@@ -194,7 +205,14 @@ func saveMarkdownFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	parent := vars["parentFolder"]
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	auth, err := isAuth(r)
+	if !auth {
+		errString := "Unauthorized" + err.Error()
+		http.Error(w, errString, http.StatusUnauthorized)
+		return
+	}
+
+	err = r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
 		fmt.Println("Error parsing multipart form:", err)
 		return
@@ -291,6 +309,13 @@ func createFolderObject(w http.ResponseWriter, r *http.Request) {
 	parent := vars["parentFolder"]
 	child := vars["childFolder"]
 
+	auth, err := isAuth(r)
+	if !auth {
+		errString := "Unauthorized" + err.Error()
+		http.Error(w, errString, http.StatusUnauthorized)
+		return
+	}
+
 	fmt.Printf("creating %s/%s\n", parent, child)
 
 	if strings.Contains(child, ".md") {
@@ -319,6 +344,13 @@ func createTLObject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	parent := vars["parentFolder"]
 	child := vars["childFolder"]
+
+	auth, err := isAuth(r)
+	if !auth {
+		errString := "Unauthorized" + err.Error()
+		http.Error(w, errString, http.StatusUnauthorized)
+		return
+	}
 
 	fmt.Printf("creating %s/%s\n", parent, child)
 
@@ -351,6 +383,13 @@ func deleteFolderObject(w http.ResponseWriter, r *http.Request) {
 	parent := vars["parentFolder"]
 	child := vars["childFolder"]
 
+	auth, err := isAuth(r)
+	if !auth {
+		errString := "Unauthorized" + err.Error()
+		http.Error(w, errString, http.StatusUnauthorized)
+		return
+	}
+
 	if strings.Contains(child, ".md") {
 		// delete file
 
@@ -379,7 +418,14 @@ func deleteTLObject(w http.ResponseWriter, r *http.Request) {
 	parent := vars["parentFolder"]
 	child := vars["childFolder"]
 
-	err := removeTimelineObject(parent, child)
+	auth, err := isAuth(r)
+	if !auth {
+		errString := "Unauthorized" + err.Error()
+		http.Error(w, errString, http.StatusUnauthorized)
+		return
+	}
+
+	err = removeTimelineObject(parent, child)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Failed to remove node", http.StatusInternalServerError)

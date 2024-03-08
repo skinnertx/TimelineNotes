@@ -126,36 +126,49 @@ export default function TimelineTreeView({originalData}) {
         // timeline names must be unique
         // add timeline addition func to markdown editor!
         const newTimelineURL = `http://localhost:8080/api/create/TimelineFolder/${viewedNode.name}/${newTimelineName}`
-          fetch(newTimelineURL, {
-            method: 'POST'
+        
+        const jwtToken = localStorage.getItem('token')
+
+        const headers = new Headers()
+        headers.append('Authorization', `Bearer ${jwtToken}`)
+        
+        fetch(newTimelineURL, {
+            method: 'POST',
+            headers: headers,
           }).then(response => {
             if (!response.ok) {
+              if(response.status === 401) {
+                alert("admin only, please login")
+              }
               throw new Error(`HTTP error! Status: ${response.status}`);
+            } else {
+              // Update the state to include the new folder as a child of the viewedNode
+              setviewedNode(prevState => {
+                let newChildren = []
+                if (prevState && prevState.children) {
+                  newChildren = [...prevState.children, newTimeline]
+                } else {
+                  newChildren = [newTimeline]
+                }
+
+                const updatedNode = {
+                  name: viewedNode.name,
+                  children: [...newChildren]
+                }
+
+                // Update the data prop with the new child folder as well
+                const updatedData = updateData(data, currentPath, updatedNode);
+                setData(updatedData)
+                return updatedNode;
+               });
             }
           }).catch(error => {
             console.error('Removal Error: , error')
+            return
           })
 
   
-        // Update the state to include the new folder as a child of the viewedNode
-        setviewedNode(prevState => {
-            let newChildren = []
-            if (prevState && prevState.children) {
-              newChildren = [...prevState.children, newTimeline]
-            } else {
-              newChildren = [newTimeline]
-            }
-
-            const updatedNode = {
-              name: viewedNode.name,
-              children: [...newChildren]
-            }
-  
-            // Update the data prop with the new child folder as well
-            const updatedData = updateData(data, currentPath, updatedNode);
-            setData(updatedData)
-            return updatedNode;
-        });
+        
     }
     }
   
@@ -169,29 +182,42 @@ export default function TimelineTreeView({originalData}) {
   
           // add the folder to neo4j, if that fails, return with error!
           const newFolderURL = `http://localhost:8080/api/create/TimelineFolder/${viewedNode.name}/${newFolderName}`
+          
+          const jwtToken = localStorage.getItem('token')
+
+          const headers = new Headers()
+          headers.append('Authorization', `Bearer ${jwtToken}`)
+          
           fetch(newFolderURL, {
-            method: 'POST'
+            method: 'POST',
+            headers: headers,
           }).then(response => {
             if (!response.ok) {
+              if(response.status === 401) {
+                alert("admin only, please login")
+              }
               throw new Error(`HTTP error! Status: ${response.status}`);
+            } else {
+                
+              // Update the state to include the new folder as a child of the viewedNode
+              setviewedNode(prevState => {
+                const updatedNode = {
+                    ...prevState,
+                    children: [...prevState.children, newFolder]
+                };
+
+                // Update the data prop with the new child folder as well
+                const updatedData = updateData(data, currentPath, updatedNode);
+                setData(updatedData)
+                return updatedNode;
+            });
             }
           }).catch(error => {
             console.error('Removal Error: , error')
+            return
           })
           
-  
-          // Update the state to include the new folder as a child of the viewedNode
-          setviewedNode(prevState => {
-              const updatedNode = {
-                  ...prevState,
-                  children: [...prevState.children, newFolder]
-              };
-  
-              // Update the data prop with the new child folder as well
-              const updatedData = updateData(data, currentPath, updatedNode);
-              setData(updatedData)
-              return updatedNode;
-          });
+
       }
     };
   
@@ -211,28 +237,41 @@ export default function TimelineTreeView({originalData}) {
   
           // update neo4j, if it fails, return
           const removeFolderURL = `http://localhost:8080/api/delete/TimelineFolder/${viewedNode.name}/${objectNameToRemove}`
+          
+          const jwtToken = localStorage.getItem('token')
+
+          const headers = new Headers()
+          headers.append('Authorization', `Bearer ${jwtToken}`)
+
           fetch(removeFolderURL, {
-            method: 'POST'
+            method: 'POST',
+            headers:headers,
           }).then(response => {
             if (!response.ok) {
+              if(response.status === 401) {
+                alert("admin only, please login")
+              }
               throw new Error(`HTTP error! Status: ${response.status}`);
+            } else {
+                // Remove the object from the data structure
+                const updatedData = removeData(data, currentPath, objectNameToRemove);
+                setData(updatedData);
+                
+                // Update the state to reflect the removed object
+                setviewedNode(prevState => {
+                  const updatedNode = {
+                    ...prevState,
+                    children: prevState.children.filter(child => child.name !== objectNameToRemove)
+                  };
+                  return updatedNode;
+                });
             }
           }).catch(error => {
             console.error('Removal Error: , error')
+            return
           })
   
-          // Remove the object from the data structure
-          const updatedData = removeData(data, currentPath, objectNameToRemove);
-          setData(updatedData);
-          
-          // Update the state to reflect the removed object
-          setviewedNode(prevState => {
-            const updatedNode = {
-              ...prevState,
-              children: prevState.children.filter(child => child.name !== objectNameToRemove)
-            };
-            return updatedNode;
-          });
+
         } else {
           alert(`Object "${objectNameToRemove}" not found.`);
         }

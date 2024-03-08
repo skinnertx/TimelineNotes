@@ -140,14 +140,49 @@ export default function TreeView({originalData}) {
           formData.append('file', blob, fileWithEnd);
 
           const uploadURL = config.backendBaseUrl + `create/MarkdownFile/${viewedNode.name}`
+
+          const jwtToken = localStorage.getItem('token')
+
+          const headers = new Headers()
+          headers.append('Authorization', `Bearer ${jwtToken}`)
+
           const response = await fetch(uploadURL, {
               method: 'POST',
+              headers: headers,
               body: formData,
           });
 
           if (!response.ok) {
+              if(response.status === 401) {
+                alert("admin only, please login")
+              }
               throw new Error(`Failed to save Markdown file (status ${response.status})`);
           }
+
+          const newFile = {
+            name: fileWithEnd,
+            children: []
+          };
+    
+          // Update the state to include the new file as a child of the viewedNode
+          setviewedNode(prevState => {
+            let newChildren = []
+            if (prevState && prevState.children) {
+              newChildren = [...prevState.children, newFile]
+            } else {
+              newChildren = [newFile]
+            }
+    
+            const updatedNode = {
+              name: viewedNode.name,
+              children: [...newChildren]
+            }
+    
+            // Update the data prop with the new child folder as well
+            const updatedData = updateData(data, currentPath, updatedNode);
+            setData(updatedData)
+            return updatedNode;
+          });
 
           console.log('Markdown file saved successfully!');
       } catch (error) {
@@ -155,30 +190,7 @@ export default function TreeView({originalData}) {
           return
       }
 
-      const newFile = {
-        name: fileWithEnd,
-        children: []
-    };
 
-      // Update the state to include the new file as a child of the viewedNode
-      setviewedNode(prevState => {
-        let newChildren = []
-        if (prevState && prevState.children) {
-          newChildren = [...prevState.children, newFile]
-        } else {
-          newChildren = [newFile]
-        }
-
-        const updatedNode = {
-          name: viewedNode.name,
-          children: [...newChildren]
-        }
-
-        // Update the data prop with the new child folder as well
-        const updatedData = updateData(data, currentPath, updatedNode);
-        setData(updatedData)
-        return updatedNode;
-    });
   };
 
     // handle add folder
@@ -192,29 +204,41 @@ export default function TreeView({originalData}) {
   
           // add the folder to neo4j, if that fails, return with error!
           const newFolderURL = `http://localhost:8080/api/create/Folder/${viewedNode.name}/${newFolderName}`
+          
+          const jwtToken = localStorage.getItem('token')
+
+          const headers = new Headers()
+          headers.append('Authorization', `Bearer ${jwtToken}`)
+
           fetch(newFolderURL, {
-            method: 'POST'
+            method: 'POST',
+            headers:headers,
           }).then(response => {
             if (!response.ok) {
+              if(response.status === 401) {
+                alert("admin only, please login")
+              }
               throw new Error(`HTTP error! Status: ${response.status}`);
             }
+
+            // Update the state to include the new folder as a child of the viewedNode
+            setviewedNode(prevState => {
+              const updatedNode = {
+                  ...prevState,
+                  children: [...prevState.children, newFolder]
+              };
+
+              // Update the data prop with the new child folder as well
+              const updatedData = updateData(data, currentPath, updatedNode);
+              setData(updatedData)
+              return updatedNode;
+            });
           }).catch(error => {
             console.error('Removal Error: , error')
           })
           
   
-          // Update the state to include the new folder as a child of the viewedNode
-          setviewedNode(prevState => {
-              const updatedNode = {
-                  ...prevState,
-                  children: [...prevState.children, newFolder]
-              };
-  
-              // Update the data prop with the new child folder as well
-              const updatedData = updateData(data, currentPath, updatedNode);
-              setData(updatedData)
-              return updatedNode;
-          });
+          
       }
     };
 
@@ -243,30 +267,41 @@ export default function TreeView({originalData}) {
 
             // update neo4j, if it fails, return
             const removeFolderURL = `http://localhost:8080/api/delete/Folder/${viewedNode.name}/${objectNameToRemove}`
+            
+            const jwtToken = localStorage.getItem('token')
+
+            const headers = new Headers()
+            headers.append('Authorization', `Bearer ${jwtToken}`)
+            
             fetch(removeFolderURL, {
-              method: 'POST'
+              method: 'POST',
+              headers:headers
             }).then(response => {
               if (!response.ok) {
+                if(response.status === 401) {
+                  alert("admin only, please login")
+                }
                 throw new Error(`HTTP error! Status: ${response.status}`);
               }
+                
+              // Remove the object from the data structure
+              const updatedData = removeData(data, currentPath, objectNameToRemove);
+              setData(updatedData);
+              
+              // Update the state to reflect the removed object
+              setviewedNode(prevState => {
+                const updatedNode = {
+                  ...prevState,
+                  children: prevState.children.filter(child => child.name !== objectNameToRemove)
+                };
+                return updatedNode;
+              });
             }).catch(error => {
               console.error('Removal Error: , error')
             })
 
           }
-  
-          // Remove the object from the data structure
-          const updatedData = removeData(data, currentPath, objectNameToRemove);
-          setData(updatedData);
-          
-          // Update the state to reflect the removed object
-          setviewedNode(prevState => {
-            const updatedNode = {
-              ...prevState,
-              children: prevState.children.filter(child => child.name !== objectNameToRemove)
-            };
-            return updatedNode;
-          });
+
         } else {
           alert(`Object "${objectNameToRemove}" not found.`);
         }
