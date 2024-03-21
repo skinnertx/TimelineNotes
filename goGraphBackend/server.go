@@ -7,6 +7,7 @@ import (
 
 	"os"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -38,6 +39,9 @@ func main() {
 	jwtSecretKeyString := os.Getenv("SECRET_KEY")
 	jwtSecretKey = []byte(jwtSecretKeyString)
 
+	s3AccessKey := os.Getenv("AWS_ACCESS_KEY")
+	s3SecretKey := os.Getenv("AWS_SECRET_KEY")
+
 	adminUser = os.Getenv("ADMIN_USER")
 	adminPass = os.Getenv("ADMIN_PASS")
 
@@ -57,7 +61,8 @@ func main() {
 	fmt.Println("neo4j Connection established.")
 
 	// set up s3 connection
-	svc = establishS3Connection()
+	creds := credentials.NewStaticCredentials(s3AccessKey, s3SecretKey, "")
+	svc = establishS3Connection(creds)
 
 	// set up endpoints
 	r := mux.NewRouter()

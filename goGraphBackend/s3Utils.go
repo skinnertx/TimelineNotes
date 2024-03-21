@@ -5,19 +5,21 @@ import (
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 var bucketName = "timeline-notes-bucket"
 
-func establishS3Connection() *s3.S3 {
+func establishS3Connection(creds *credentials.Credentials) *s3.S3 {
 	// Specify your AWS region
 	awsRegion := "us-east-1"
 
 	// Create an AWS session
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(awsRegion),
+		Region:      aws.String(awsRegion),
+		Credentials: creds,
 	})
 	if err != nil {
 		fmt.Println("Error creating session:", err)
