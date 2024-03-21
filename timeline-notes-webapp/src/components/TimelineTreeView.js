@@ -442,7 +442,7 @@ export default function TimelineTreeView({originalData}) {
   return (
     <div>
         <div>
-          <h2>Timeline Tree View</h2>
+          <h2 className='folder-tree-header'>Timeline Tree View</h2>
           <div className='tlexplorerContainer'>
             
             <div className='tlfileTree'>

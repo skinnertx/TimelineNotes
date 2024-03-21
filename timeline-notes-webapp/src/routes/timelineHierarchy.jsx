@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TimelineTreeView from '../components/TimelineTreeView';
+import LoadingSpinner from '../components/LoadingSpinner';
 import config from '../config';
 
 export default function TimelineHierarchy() {
@@ -39,15 +40,11 @@ export default function TimelineHierarchy() {
       fetchHierarchy();
     }, []); // Empty dependency array means this effect runs once on component mount
 
-
-    
     return (
         <div>
           <div>
             {showSpinner ? (
-              <div>
-                LOADING
-              </div>
+              <LoadingSpinner/>
             ) : (
               <TimelineTreeView originalData={hierarchy} />
             )}

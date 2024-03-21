@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TreeView from '../components/TreeView';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 
 export default function Hierarchy() {
@@ -40,15 +41,11 @@ export default function Hierarchy() {
     }, []); // Empty dependency array means this effect runs once on component mount
 
 
-    
     return (
         <div>
-          <h1>Data from Go Backend</h1>
           <div>
             {showSpinner ? (
-              <div>
-                LOADING
-              </div>
+              <LoadingSpinner />
             ) : (
               <TreeView originalData={hierarchy} />
             )}

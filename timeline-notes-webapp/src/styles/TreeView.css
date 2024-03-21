@@ -7,6 +7,10 @@
   border: 3px solid #ced3d4;
 }
 
+.folder-tree-header {
+  margin-left: 60px;
+}
+
 .childNode {
   display: flex;
   align-items: center;

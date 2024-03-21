@@ -469,7 +469,7 @@ export default function TreeView({originalData}) {
     return (
       <div>
           <div>
-            <h2>Tree View</h2>
+            <h2 className='folder-tree-header'>Folder Tree View</h2>
             <div className='explorerContainer'>
               
               <div className='fileTree'>
