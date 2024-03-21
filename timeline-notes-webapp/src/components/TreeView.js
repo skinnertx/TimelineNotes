@@ -257,13 +257,6 @@ export default function TreeView({originalData}) {
           return
         }
         if (objectToRemove) {
-          if (objectNameToRemove.includes(".md")) {
-
-            // TODO add file deletion!
-            console.log("file deletion WIP")
-            return
-
-          } else {
 
             // update neo4j, if it fails, return
             const removeFolderURL = `http://localhost:8080/api/delete/Folder/${viewedNode.name}/${objectNameToRemove}`
@@ -299,8 +292,6 @@ export default function TreeView({originalData}) {
             }).catch(error => {
               console.error('Removal Error: , error')
             })
-
-          }
 
         } else {
           alert(`Object "${objectNameToRemove}" not found.`);

@@ -33,6 +33,23 @@ func establishS3Connection(creds *credentials.Credentials) *s3.S3 {
 	return svc
 }
 
+func removeS3File(s3key string) error {
+
+	input := &s3.DeleteObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(s3key),
+	}
+
+	// Perform the DeleteObject operation
+	_, err := svc.DeleteObject(input)
+	if err != nil {
+		return fmt.Errorf("error deleting object:")
+	}
+
+	fmt.Println("Object deleted successfully.")
+	return nil
+}
+
 func uploadMarkdownToS3(file io.ReadSeeker, s3key string) error {
 
 	_, err := svc.PutObject(&s3.PutObjectInput{

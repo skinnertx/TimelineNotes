@@ -228,7 +228,7 @@ func saveMarkdownFile(w http.ResponseWriter, r *http.Request) {
 	fileName := fileHeader.Filename
 	fmt.Println("Uploaded filename:", fileName)
 
-	s3key, err := getMarkdowns3Key(parent, fileName)
+	s3key, _ := getMarkdowns3Key(parent, fileName)
 
 	err = uploadMarkdownToS3(file, s3key)
 	if err != nil {
@@ -391,10 +391,21 @@ func deleteFolderObject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.Contains(child, ".md") {
-		// delete file
-
-		// TODO add logic to delete a file from neo4j and s3
-		fmt.Println("file deletion is WIP")
+		// delete file from s3
+		s3key, err := getMarkdowns3Key(parent, child)
+		err = removeS3File(s3key)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Failed to remove node", http.StatusInternalServerError)
+			return
+		}
+		// delete file from neo4j
+		err = removeFileNeo4j(parent, child)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Failed to remove node", http.StatusInternalServerError)
+			return
+		}
 
 	} else {
 		// delete folder

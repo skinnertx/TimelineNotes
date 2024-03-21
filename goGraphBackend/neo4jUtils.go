@@ -346,7 +346,7 @@ func getS3KeyForImage(parent string, name string) (string, error) {
 
 		dbFileNode, ok := fileNode.(dbtype.Node)
 		if !ok {
-			return "", fmt.Errorf("Unexpected type for mediaNode")
+			return "", fmt.Errorf("unexpected type for mediaNode")
 		}
 
 		s3key, exists := dbFileNode.Props["s3key"]
@@ -356,7 +356,7 @@ func getS3KeyForImage(parent string, name string) (string, error) {
 		return s3key.(string), nil
 	}
 
-	return "", fmt.Errorf("Media not found: %s", name)
+	return "", fmt.Errorf("media not found: %s", name)
 
 }
 
@@ -400,12 +400,12 @@ func generateS3Key(parent string, fileName string) (string, error) {
 
 			dbFileNode, ok := folderNode.(dbtype.Node)
 			if !ok {
-				return "", fmt.Errorf("Unexpected type for folderNode")
+				return "", fmt.Errorf("unexpected type for folderNode")
 			}
 
 			dbFolderName, exists := dbFileNode.Props["name"]
 			if !exists {
-				return "", fmt.Errorf("Name for folder borken: %s", folderName)
+				return "", fmt.Errorf("name for folder broken: %s", folderName)
 			}
 
 			folderName = dbFolderName.(string)
@@ -460,22 +460,22 @@ func getMarkdowns3Key(parent string, fileName string) (string, error) {
 		record := result.Record()
 		fileNode, exists := record.Get("f")
 		if !exists {
-			return "", fmt.Errorf("File Node not found: %s", fileName)
+			return "", fmt.Errorf("file Node not found: %s", fileName)
 		}
 
 		dbFileNode, ok := fileNode.(dbtype.Node)
 		if !ok {
-			return "", fmt.Errorf("Unexpected type for fileNode")
+			return "", fmt.Errorf("unexpected type for fileNode")
 		}
 
 		s3key, exists := dbFileNode.Props["s3key"]
 		if !exists {
-			return "", fmt.Errorf("S3 key not found for file: %s", fileName)
+			return "", fmt.Errorf("s3 key not found for file: %s", fileName)
 		}
 		return s3key.(string), nil
 	}
 
-	return "", fmt.Errorf("File not found: %s", fileName)
+	return "", fmt.Errorf("file not found: %s", fileName)
 }
 
 /*
@@ -588,6 +588,26 @@ func removeFolder(parent string, child string) error {
 
 	_, err := session.Run(ctx,
 		"MATCH (p:Directory {name: $parent})-[:CONTAINS]->(c:Directory {name: $child}) DETACH DELETE c RETURN p",
+		map[string]interface{}{
+			"parent": parent,
+			"child":  child,
+		},
+	)
+
+	return err
+}
+
+func removeFileNeo4j(parent string, child string) error {
+	session := driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	_, err := session.Run(ctx,
+		`
+		MATCH (p:Directory {name: $parent})-[:CONTAINS]->(c:File {name: $child})
+		OPTIONAL MATCH (c)-[:LINKED]->(image:Image)
+		DETACH DELETE c, image
+		RETURN p
+		`,
 		map[string]interface{}{
 			"parent": parent,
 			"child":  child,
