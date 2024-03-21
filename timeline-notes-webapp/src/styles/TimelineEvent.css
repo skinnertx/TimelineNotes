@@ -9,8 +9,8 @@
 .event-button {
     top: -5vh;
     position: absolute;
-    width: 20px; /* Initial width */
-    height: 20px; /* Initial height */
+    width: 20px; 
+    height: 20px; 
     background-image: url(../assets/moon.png);
     border: 3px solid #338;
     border-radius: 20px;

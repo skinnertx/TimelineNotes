@@ -98,7 +98,6 @@ export default function TimelineTreeView({originalData}) {
     }
 
     const handleTimelineClick = (nodeName) => {  
-      //TODO create timeline viewing page
       let constructedPath = '/timeline/' + nodeName
       navigate(constructedPath)
     }
@@ -122,7 +121,6 @@ export default function TimelineTreeView({originalData}) {
             children: []
         };
   
-        // TODO: update neo4j with a new timeline
         // timeline names must be unique
         // add timeline addition func to markdown editor!
         const newTimelineURL = `http://localhost:8080/api/create/TimelineFolder/${viewedNode.name}/${newTimelineName}`
@@ -427,8 +425,10 @@ export default function TimelineTreeView({originalData}) {
                 </button>
                 ) : (
                   <button className='tlgrid-button' onClick={() => handleNodeClick(child.name)}>
-                    <img className='tlicon' src={purpFolder} alt={child.name} />
-                    <p className='tlitem-name'>{child.name}</p>
+                    <div className='tlbutton-content'>
+                      <img className='tlicon' src={purpFolder} alt={child.name} />
+                      <p className='tlitem-name'>{child.name}</p>
+                    </div>
                   </button>
               )}
             </div>
@@ -452,20 +452,8 @@ export default function TimelineTreeView({originalData}) {
               {renderFolder(viewedNode)}
             </div>
           </div>
-          
-          <div>Current Path: {currentPath.join(' > ')}</div>
-          <button onClick={handleBackClick}>Back</button>
         </div>
-        <div>
-        Stack:
-        <ul>
-            {currentPath.map((item, index) => (
-            <li key={index} >
-                {item}
-            </li>
-            ))}
-        </ul>
-        </div>
+        
     </div>
   );
 };

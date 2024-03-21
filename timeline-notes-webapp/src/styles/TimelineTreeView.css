@@ -1,9 +1,17 @@
+/* 
+    This is absolutely the stupidest thing i have ever done in code.
+    Quite literally this style is an exact replica of TreeView.css with some *very* minor deviations
+    and i was too stupid to put them in the same place
+
+    maybe someday I'll sort it out but for now this monstrosity stays
+*/
+
 .tlexplorerContainer {
     display: flex;
     flex-direction: row;
     overflow: hidden;
     background-color: #E5eaec;
-    min-height: 70vh;
+    min-height: 80vh;
     border: 3px solid #ced3d4;
 }
 
@@ -38,6 +46,9 @@
 .tlfileTree {
     flex: 1;
     border-right: 3px solid #ced3d4;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .tlfileTree ul {
@@ -87,35 +98,39 @@
 
 .tlgrid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-    gap: 10px; /* Adjust as needed */
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
+    grid-auto-rows: 150px;
+    gap: 10px; 
     margin: 10px;
-    padding: 10px;
     background-color: white;
     border-radius: 5px;
     height: 85%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-items: start;
 }
 
 .tlgrid-item {
     position: relative;
     width: 120px;
-    height: 120px;
+    min-height: 120px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     padding: 10px;
-    position: relative; /* Ensure the grid item is positioned */
+    position: relative; 
+    flex-grow: 0;
 }
 
 .tldelete-button {
     position: absolute;
     top: 0;
     right: 30px;
-    width: 28px; /* Set the width of the delete button */
-    height: 28px; /* Set the height of the delete button */
-    padding: 5px; /* Add padding to provide space around the button */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
-    z-index: 1; /* Ensure the button is above other content */
+    width: 28px;
+    height: 28px; 
+    padding: 5px; 
+    box-sizing: border-box; 
+    z-index: 1; 
     border-radius: 15px;
     background: white;
     border: #ced3d4 solid 1px;
@@ -129,17 +144,13 @@
     padding: 0;
     top:-4px;
     left:-5px;
-    width: 25px; /* Set the width of the delete button */
+    width: 25px; 
     height: 25px;
 
 }
 
   .tlgrid-item:hover .tldelete-button {
     display: block
-  }
-
-  .tlgrid-button {
-
   }
   
   .tlgrid-item .tlgrid-button {
@@ -148,34 +159,26 @@
     border: none;
     background: none;
     cursor: pointer;
-    position: relative;
-    justify-content: center;
     
   }
 
+  .tlcontent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
 
   .tlicon {
-    position: absolute;
-    top: 20%; /* Position the icon vertically centered */
-     /* Position the icon horizontally centered */
-    transform: translate(-50%, -50%);
-    width: 50px; /* Adjust width as needed */
-    height: auto; /* Adjust height as needed */
+    width: 50px; 
+    height: auto;
   }
-  
+
   .tlitem-name {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    margin-top: 5px;
+    font-size: 14px;
     text-overflow: ellipsis;
-    white-space: normal;
-    max-height: 2em;
-    padding: 5px;
     font-family: 'Work Sans';
   }
   

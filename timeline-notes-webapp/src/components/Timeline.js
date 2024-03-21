@@ -99,8 +99,7 @@ class Event {
   }
 }
 
-// TODO
-// add user authen
+// TODO GIGA
 // fix note UI
 // upload to internet
 

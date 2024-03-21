@@ -451,8 +451,10 @@ export default function TreeView({originalData}) {
                 </button>
                 ) : (
                   <button className='grid-button' onClick={() => handleNodeClick(child.name)}>
-                    <img className='icon' src={purpFolder} alt={child.name} />
-                    <p className='item-name'>{child.name}</p>
+                    <div className='button-content'>
+                      <img className='icon' src={purpFolder} alt={child.name} />
+                      <p className='item-name'>{child.name}</p>
+                    </div>
                   </button>
               )}
               
@@ -477,20 +479,8 @@ export default function TreeView({originalData}) {
                 {renderFolder(viewedNode)}
               </div>
             </div>
-            
-            <div>Current Path: {currentPath.join(' > ')}</div>
-            <button onClick={handleBackClick}>Back</button>
           </div>
-          <div>
-          Stack:
-          <ul>
-              {currentPath.map((item, index) => (
-              <li key={index} >
-                  {item}
-              </li>
-              ))}
-          </ul>
-          </div>
+          
       </div>
     );
 };

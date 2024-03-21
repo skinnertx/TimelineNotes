@@ -1,7 +1,7 @@
 .navbar {
     width: 100%;
     background: rgb(159,39,199);
-    background: linear-gradient(90deg, rgba(159,39,199,1) 16%, rgba(140,84,204,1) 36%, rgba(103,68,220,1) 70%, rgba(21,107,217,1) 88%); /* Change the background color as needed */
+    background: linear-gradient(90deg, rgba(159,39,199,1) 16%, rgba(140,84,204,1) 36%, rgba(103,68,220,1) 70%, rgba(21,107,217,1) 88%); 
     color: white; 
     padding: 10px 20px; 
     display: flex; 
@@ -33,7 +33,7 @@
   }
 
   .navbar ul li a:hover {
-    color: lightblue; /* Change text color on hover */
+    color: lightblue; 
   }
 
   .title {
