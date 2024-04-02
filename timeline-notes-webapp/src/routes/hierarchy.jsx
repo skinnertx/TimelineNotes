@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TreeView from '../components/TreeView';
 import LoadingSpinner from '../components/LoadingSpinner';
+import config from '../config';
 
 
 export default function Hierarchy() {
@@ -12,7 +13,7 @@ export default function Hierarchy() {
     useEffect(() => {
       const fetchHierarchy = async () => {
         try {
-          const response = await fetch('http://localhost:8080/api/hierarchy/root');
+          const response = await fetch(config.backendBaseUrl + 'hierarchy/root');
   
           if (!response.ok) {
             throw new Error(`Failed to fetch JSON file (status ${response.status})`);
