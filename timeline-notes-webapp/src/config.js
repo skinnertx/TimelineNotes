@@ -1,6 +1,6 @@
 // TODO change when uploading to AWS
 const config = {
-    backendBaseUrl: "https://www.timelinenotes.org/api/",
+    backendBaseUrl: "https://api.timelinenotes.org/api/",
     frontendBaseURL: "http://localhost:3000/"
 }
 
