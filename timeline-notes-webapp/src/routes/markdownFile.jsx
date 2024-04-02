@@ -77,6 +77,7 @@ export default function MicromarkFile() {
         // Replace matches using a custom function
         const linkedTimelines = output.replace(regexPattern, (match, linkText, url, startDate, endDate) => {
             // Construct the HTML anchor tag with the extracted values
+            // TODO fix this so it works again
             const timelineURL = config.frontendBaseURL + "timeline/" + url
             const htmlAnchorTag = `<a href="${timelineURL}">${linkText}</a>`;
             return htmlAnchorTag;

@@ -8,6 +8,7 @@ import backArrow from '../assets/replyArrow.png'
 import folderIcon from '../assets/folderIcon.png'
 import trashCan from '../assets/trash.png'
 import { useNavigate } from 'react-router-dom';
+import config from '../config';
 
 export default function TimelineTreeView({originalData}) {
 
@@ -123,7 +124,7 @@ export default function TimelineTreeView({originalData}) {
   
         // timeline names must be unique
         // add timeline addition func to markdown editor!
-        const newTimelineURL = `http://localhost:8080/api/create/TimelineFolder/${viewedNode.name}/${newTimelineName}`
+        const newTimelineURL = config.backendBaseUrl + `create/TimelineFolder/${viewedNode.name}/${newTimelineName}`
         
         const jwtToken = localStorage.getItem('token')
 
@@ -179,7 +180,7 @@ export default function TimelineTreeView({originalData}) {
           };
   
           // add the folder to neo4j, if that fails, return with error!
-          const newFolderURL = `http://localhost:8080/api/create/TimelineFolder/${viewedNode.name}/${newFolderName}`
+          const newFolderURL = config.backendBaseUrl + `create/TimelineFolder/${viewedNode.name}/${newFolderName}`
           
           const jwtToken = localStorage.getItem('token')
 
@@ -234,7 +235,7 @@ export default function TimelineTreeView({originalData}) {
         if (objectToRemove) {
   
           // update neo4j, if it fails, return
-          const removeFolderURL = `http://localhost:8080/api/delete/TimelineFolder/${viewedNode.name}/${objectNameToRemove}`
+          const removeFolderURL = config.backendBaseUrl + `delete/TimelineFolder/${viewedNode.name}/${objectNameToRemove}`
           
           const jwtToken = localStorage.getItem('token')
 

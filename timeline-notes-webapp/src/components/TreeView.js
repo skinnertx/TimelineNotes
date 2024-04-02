@@ -203,7 +203,7 @@ export default function TreeView({originalData}) {
           };
   
           // add the folder to neo4j, if that fails, return with error!
-          const newFolderURL = `http://localhost:8080/api/create/Folder/${viewedNode.name}/${newFolderName}`
+          const newFolderURL = config.backendBaseUrl + `create/Folder/${viewedNode.name}/${newFolderName}`
           
           const jwtToken = localStorage.getItem('token')
 
@@ -259,7 +259,7 @@ export default function TreeView({originalData}) {
         if (objectToRemove) {
 
             // update neo4j, if it fails, return
-            const removeFolderURL = `http://localhost:8080/api/delete/Folder/${viewedNode.name}/${objectNameToRemove}`
+            const removeFolderURL = config.backendBaseUrl + `delete/Folder/${viewedNode.name}/${objectNameToRemove}`
             
             const jwtToken = localStorage.getItem('token')
 
