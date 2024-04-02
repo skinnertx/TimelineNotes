@@ -16,7 +16,7 @@ export default function CodeMirrorEditor({initialValue, handleChange}) {
   const onChange = React.useCallback((val, viewUpdate) => {
     setValue(val);
     handleChange(val)
-  }, []);
+  }, [handleChange]);
 
   return (
     <div>

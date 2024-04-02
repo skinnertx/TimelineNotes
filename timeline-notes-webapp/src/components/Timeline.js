@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import TimelineEvent from './TimelineEvent';
 import '../styles/Timeline.css'
 
@@ -391,41 +391,6 @@ export default function Timeline({data}) {
     return([newStart, newEnd])
   }
 
-  // get the earliest and latests dates in the list
-  // called on load
-  function getInitialTimelineRange() {
-    if (eventList.length === 0) { return }
-    // special infinity dates
-    let earliestStartDate = new EventDate("+")
-    let latestEndDate = new EventDate("-")
-    // loop thru each event and compare
-    eventList.forEach((ev) => {
-      if (ev.startDate.compare(earliestStartDate) < 0) {
-        earliestStartDate = ev.startDate
-      }
-
-      if (ev.endDate.compare(latestEndDate) > 0) {
-        latestEndDate = ev.endDate
-      }
-    })
-
-    setTimelineRange(addTimelinePadding([earliestStartDate, latestEndDate]))
-    //setTimelineRange([earliestStartDate,latestEndDate])
-  }
-
-  // set timeline ticks
-  function getTimelineTicks() {
-    if (!timelineRange || timelineRange.length < 2) { return }
-
-    let sd = timelineRange[0]
-    let ed = timelineRange[1]
-    let md = sd.midpoint(ed)
-    let smd = sd.midpoint(md)
-    let emd = md.midpoint(ed)
-    
-    setTimelineTicks([sd, smd, md, emd, ed])
-  }
-
   // set margins for subtick size
   const calculateSubTickMargins = () => {
     const parentWidth = document.querySelector('.sub-timeline-container').offsetWidth
@@ -438,16 +403,10 @@ export default function Timeline({data}) {
     setMarginList(margins)
   };
 
-  // some repeated work here!!!
-  const handleResize = () => {
-    calculateSubTickMargins()
-    if (timelineRef.current) {
-      setTimelineWidth(timelineRef.current.offsetWidth * 4)
-    }
-  };
+
 
   // filter events by current range
-  function getEventsInView() {
+  const getEventsInView = useCallback(() => {
     if (timelineRange.length !== 2) { return }
     let filteredEvents = []
 
@@ -491,7 +450,7 @@ export default function Timeline({data}) {
     setRangeHeights(rangeStacks)
     
     setEventsInView(filteredEvents)
-  }
+  }, [eventList, timelineRange])
 
   // handle a timeline sub section click
   // updaate range after pushign former range to stack
@@ -546,6 +505,31 @@ export default function Timeline({data}) {
   }, [data])
 
   useEffect(() => {
+
+    // get the earliest and latests dates in the list
+    // called on load
+    function getInitialTimelineRange() {
+      if (eventList.length === 0) { return }
+      // special infinity dates
+      let earliestStartDate = new EventDate("+")
+      let latestEndDate = new EventDate("-")
+      // loop thru each event and compare
+      eventList.forEach((ev) => {
+        if (ev.startDate.compare(earliestStartDate) < 0) {
+          earliestStartDate = ev.startDate
+        }
+
+        if (ev.endDate.compare(latestEndDate) > 0) {
+          latestEndDate = ev.endDate
+        }
+      })
+
+      setTimelineRange(addTimelinePadding([earliestStartDate, latestEndDate]))
+      //setTimelineRange([earliestStartDate,latestEndDate])
+    }
+
+
+
     if (eventList.length > 0) {
       getInitialTimelineRange();
     }
@@ -554,9 +538,25 @@ export default function Timeline({data}) {
   // when the range is updated, get the date ticks!
   // also set events in view based on range
   useEffect(() => {
+
+      // set timeline ticks
+    function getTimelineTicks() {
+      if (!timelineRange || timelineRange.length < 2) { return }
+
+      let sd = timelineRange[0]
+      let ed = timelineRange[1]
+      let md = sd.midpoint(ed)
+      let smd = sd.midpoint(md)
+      let emd = md.midpoint(ed)
+      
+      setTimelineTicks([sd, smd, md, emd, ed])
+    }
+
+
+
     getTimelineTicks()
     getEventsInView()
-  }, [timelineRange])
+  }, [getEventsInView, timelineRange])
 
   // useEffect(() => {
   //   console.log("timeline ticks: ", timelineTicks)
@@ -564,6 +564,14 @@ export default function Timeline({data}) {
 
   // used to resize ui on page size change
   useEffect(() => {
+
+      // some repeated work here!!!
+    const handleResize = () => {
+      calculateSubTickMargins()
+      if (timelineRef.current) {
+        setTimelineWidth(timelineRef.current.offsetWidth * 4)
+      }
+    };
     
     handleResize()
     
@@ -613,7 +621,7 @@ export default function Timeline({data}) {
 
     setEventOffsets(newOffsets)
 
-  }, [timelineWidth, eventsInView])
+  }, [timelineWidth, eventsInView, timelineRange])
 
   // helper dispaly component function
   function TimelineTick({eventDate, isFirstTick = false }) {

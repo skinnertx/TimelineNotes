@@ -38,31 +38,33 @@ export default function MicromarkFile() {
         fetchMarkdown();
     }, [parent, file]);
 
-    // Define a custom function to replace image links with <img> tags
-    const replaceImageLinks = (markdownContent) => {
-    
-        // Regular expression to match Markdown image syntax: ![alt text](image URL)
-        const imageLinkRegex = /!\[.*?\]\((.*?)\)/g;
-    
-        // Replace image links with <img> tags pointing to S3 URLs
-        const modifiedMarkdown = markdownContent.replace(imageLinkRegex, (match, imageUrl) => {
-            // Extract the image name from the URL
-            let imageName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
 
-            console.log(file + '/' + imageName)
-            // add parent folder
-            // Construct the S3 URL based on your bucket URL and the image name
-            const s3Url = config.backendBaseUrl +  `serve/getImage/${file}/${imageName}`;
-            const encodedURL = s3Url.replace(/ /g, '%20');
-            return `![alt text](${encodedURL})`;
-        });
-    
-        return modifiedMarkdown;
-    };
 
 
     // on mount and whenever the Markdown string changes, convert it to HTML
     useEffect(() => {
+
+        // Define a custom function to replace image links with <img> tags
+        const replaceImageLinks = (markdownContent) => {
+        
+            // Regular expression to match Markdown image syntax: ![alt text](image URL)
+            const imageLinkRegex = /!\[.*?\]\((.*?)\)/g;
+        
+            // Replace image links with <img> tags pointing to S3 URLs
+            const modifiedMarkdown = markdownContent.replace(imageLinkRegex, (match, imageUrl) => {
+                // Extract the image name from the URL
+                let imageName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+
+                console.log(file + '/' + imageName)
+                // add parent folder
+                // Construct the S3 URL based on your bucket URL and the image name
+                const s3Url = config.backendBaseUrl +  `serve/getImage/${file}/${imageName}`;
+                const encodedURL = s3Url.replace(/ /g, '%20');
+                return `![alt text](${encodedURL})`;
+            });
+        
+            return modifiedMarkdown;
+        };
 
         const modifiedMarkdown = replaceImageLinks(markdownString);
 
@@ -84,7 +86,7 @@ export default function MicromarkFile() {
         const modifiedHtmlContent = linkedTimelines.replace(/<a\s+(?:[^>]*)>/gi, '<a target="_blank" $&');
 
         setOutputHtml(modifiedHtmlContent);
-    }, [markdownString]);
+    }, [markdownString, file]);
 
     // when the Markdown editor changes, update the Markdown string
     const handleMarkdownChange = (newValue) => {
